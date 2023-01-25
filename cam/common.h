@@ -3,31 +3,35 @@
 
 /* --- 定数設定 --- */
 
-#define PI 3.14159265359	//円周率[rad]
+#define PI 3.14159265359	        //円周率[rad]
 
 /* --- 人間のパラメータ --- */
-#define humanC = 0.2;		//人間の半径（肩幅から算出）[m]
-#define humanW = 4.4;		//人間の衝突部位の質量（頭部）[kg]
-#define humanVMax = 3.6;		//人間の最大速度[m/s]
-#define sigV = 0.4;			//人間の移動速度の標準偏差
-#define sigTheta = 0.0;		//人間の進行方向の標準偏差
+#define HUMAN_RADIUS        0.2 //人間の半径（肩幅から算出）[m]
+#define HUMAN_WEIGHT        4.4 //人間の衝突部位の質量（頭部）[kg]
+#define HUMAN_MAX_VELOCITY  3.6 //人間の最大速度[m/s]
+#define SGIMA_VELOCITY      0.4 //人間の移動速度の標準偏差
+#define SIGMA_THETA         0.0 //人間の進行方向の標準偏差
 
 /* --- ロボットのパラメータ --- */
-#define robC = 0.35;			//ロボットの半径[m]
-#define robW = 15;			//ロボットの質量[kg]
-#define robVMax = 0.7;		//ロボットの最大速度[m/s]
-#define robRadMax = 6.28;	//ロボットの最大旋回速度[rad/s]
+#define ROBOT_RADIUS        0.35 //ロボットの半径[m]
+#define ROBOT_WEIGHT        15	 //ロボットの質量[kg]
+#define ROBOT_MAX_VELOCITY  0.7  //ロボットの最大速度[m/s]
+#define ROBOT_MAX_RAD       6.28 //ロボットの最大旋回速度[rad/s]
 
 /* --- 対人回避軌道計画のパラメータ --- */
-#define ts = 0.5;			//単位タイムステップ時間[s]
-#define nts = 6;				//タイムステップ数
-#define N = 15 + 1;		//タイムステップ毎に生成する回避軌道経由点候補の数（0～15）
+#define TIMESTEP            0.5			//単位タイムステップ時間[s]
+#define TIMESTEP_NUM        6				//タイムステップ数
+#define EVERY_TIMESTEP_NUM  15 + 1		//タイムステップ毎に生成する回避軌道経由点候補の数（0～15）
 
 /* --- 配置に関するパラメータ --- */
-#define areaX = 4.0, areaY = 4.0;		//ロボットの移動できる範囲[m]
-#define robXInit = 2.0, robYInit = 4.0;	//ロボットの初期位置[m]
-#define robRotInit = PI / 2;				//ロボットの初期方向[rad]
-#define goalX = 2.0, goalY = 4.0;		//ロボットの目的位置[m]
-#define goalC = 0.35;					//ロボットが目的位置に接触したと判定する距離（＝robC）[m]
+// ロボット移動領域範囲
+#define AREA_X          4.0     // エリアX [m]
+#define AREA_Y          4.0     // エリアY [m]
+#define ROBOT_X_INIT    2.0     // 初期位置X [m]
+#define ROBOT_Y_INIT    4.0     // 初期位置Y [m]
+#define ROBOT_RAD_INIT  PI / 2  // 初期方向 [rad]
+#define GOAL_X          2.0     // 目的位置X [m]
+#define GOAL_Y          4.0     // 目的位置Y [m]
+#define GOAL_DADIUS     0.35    // 目的位置での接触判定距離 [m]
 
 #endif
