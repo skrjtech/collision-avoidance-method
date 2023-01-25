@@ -18,13 +18,12 @@ double humanX = 0.0, humanY = 0.0;	        //人間の現在位置[m]
 double humanTheta = 0.0;		        //人間の現在の方向[°]
 double xP = 0.0, yP = 0.0;			        //人間の移動予測点[ml
 double xV = 0.0;					//ロボットの予測速度[m/s]
-double humanC = 0.4;	        //人間の半径(肩幅)[m]
-double robC = 0.35;				//ロボットの半径[m]
-
+double humanC = 0.2;	        //人間の半径(肩幅)[m]
+double robC = 0.175;				//ロボットの半径[m]
 double colliC = 0;				//人間とロボットの接触距離[m]
 
-double humanV = 1.4 / 2;	        //人間の移動速度[m/s]
-									//double humanV = 1.4;
+//double humanV = 1.4 / 2;	        //人間の移動速度[m/s]
+double humanV = 0.5;								//double humanV = 1.4;
 
 double humanVMax = 3.6;				//人間の最大速度[m/s]
 double humanVP = 0.0;			        //人間の移動ノルム
@@ -38,13 +37,11 @@ double sigTheta = 0.0;		        //人間の進行方向の標準偏差
 double miuV = 0.0;			        //人間の移動速度の期待値[m/s]
 
 double humanW = 4.4;		        //人間の質量[kg]
-double robW = 15;		        //ロボットの質量[kg]
+double robW = 6.3;		        //ロボットの質量[kg]
 
 double ts = 0.5 * 1;		        //単位タイムステップ時間[s]
 double tp = 0.0;                      //人間の移動予測の時間[s]
 int nts = 6;				        //タイムステップ数
-
-double calD = 1.0;		        //人間とロボットの距離がこれ以下になると安全性の計算を開始する[m]
 
 double VV = 0.0;				        //変数１
 double VO = 0.0;				        //変数２
@@ -60,10 +57,11 @@ double robV = 0.0;			//ロボットの現在速度[m/s]
 double robRotV = 0.0;			//ロボットの現在角速度[rad/s]
 double robVMax = 1.4 / 2;			//ロボットの最大速度[m/s]
 double robRadMax = 6.28;		//ロボットの最大旋回速度[rad/s]
+//double robRadMax = 1.57;
 double robDist = 0.0;			//ロボットが進む距離[m]
 
-double goalX = 2.5, goalY = 5.0;	//目標位置[m]
-double goalC = 0.5;			    //目標位置の半径[m]
+double goalX = 2.0, goalY = 4.0;	//目標位置[m]
+double goalC = 0.35;			    //目標位置の半径[m]
 
 								//const int N = 15;				//パーティクルの総数
 const int N = 15 + 1;               //パーティクルの総数　N = 1 + pN ^ 1 + pN ^ 2 + ... + pN ^ NTS
@@ -113,16 +111,16 @@ int main() {
 	srand(time(NULL));
 
 	//ロボットの現在位置を測定
-	robX = 2.5;
+	robX = 2.0;
 	robY = 0.0;
 	robV = 0.0;
 	robRot = PI / 2;
 	robRotMax = robRadMax * ts;
 
 	//人間の現在位置を測定
-	humanX = 5.0;
-	humanY = 2.5;
-	humanTheta = PI * 2 / 2;
+	humanX = 4.0;
+	humanY = 0.0;
+	humanTheta = PI * 3 / 4;
 	miuV = humanV;
 
 	colliC = humanC + robC;
@@ -134,9 +132,9 @@ int main() {
 	//結果表示ファイルの作成
 	fopen_s(&fp, "exam1.csv", "wt");
 	fprintf(fp, "robX,robY,humanX,humanY,");
-	fprintf(fp, "OD,nowRisk,humPred,S\n");
+	fprintf(fp, "OD,nowRisk,humPred,S,st\n");
 
-	printf("robot pos=(%0.8lf,%0.8lf)\n", robX, robY);
+	printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 	tp = 1;
 	xP = robX;
 	yP = robY;
@@ -152,12 +150,12 @@ int main() {
 	objDist = sqrt(pow(humanX - robX, 2) + pow(humanY - robY, 2));
 
 	//時刻ごとの諸変数を表示
-	fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,", w, x, y, z);
-	fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf\n", objDist, nowR, P, S);
+	fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,", w, x, y, z);
+	fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", objDist, nowR, P, S, st);
 
 
 
-	printf("human pos=(%0.8lf,%0.8lf)\n", humanX, humanY);
+	printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
 
 	//ロボットが目的位置に到達していない場合，移動を継続する
 	while (robX != goalX || robY != goalY)
@@ -220,6 +218,8 @@ int main() {
 
 			humanMoving();
 
+			safety();
+
 			w = robX;
 			x = robY;
 			y = humanX;
@@ -231,8 +231,8 @@ int main() {
 
 			//string p2string(std::to_string(P));
 
-			//fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%s,%0.8lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
-			fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf\n", w, x, y, z, objDist, nowR, P, S);
+			//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
+			fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 
 
 			if (safe == 0) {
@@ -258,7 +258,7 @@ int main() {
 			robYP = robY + robVMax * ts * sin(robRotP);
 			xP = robXP;
 			yP = robYP;
-			xV = robV;
+			xV = robVMax;
 			r = routing();
 
 			if (r == 0) {
@@ -281,7 +281,7 @@ int main() {
 				robY = robY + robVMax * ts * sin(robRot);
 				robV = robVMax;
 				gD = sqrt(pow(goalX - robX, 2) + pow(goalY - robY, 2));
-				printf("robot pos=(%0.8lf,%0.8lf)\n", robX, robY);
+				printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
 
 
@@ -291,6 +291,8 @@ int main() {
 				safety();
 
 				humanMoving();
+
+				safety();
 
 				w = robX;
 				x = robY;
@@ -302,8 +304,8 @@ int main() {
 
 				//string p2string(std::to_string(P));
 
-				//fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%s,%0.8lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
-				fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf\n", w, x, y, z, objDist, nowR, P, S);
+				//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
+				fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 
 
 				if (gD < goalC) {
@@ -639,20 +641,20 @@ int main() {
 
 				/*
 				for (int i = 0; i < N; ++i) {
-				printf("GD[%d][][] = %0.8lf\n", i, GD[i]);
+				printf("GD[%d][][] = %0.10lf\n", i, GD[i]);
 				}
 
 				for (int i = 0; i < N; ++i) {
-				printf("X[%d] = %0.8lf\n", i, X[i]);
-				printf("Y[%d] = %0.8lf\n", i, Y[i]);
+				printf("X[%d] = %0.10lf\n", i, X[i]);
+				printf("Y[%d] = %0.10lf\n", i, Y[i]);
 				}
 
 				for (int i = 0; i < N; ++i) {
-				printf("V[%d] = %0.8lf\n", i, V[i]);
+				printf("V[%d] = %0.10lf\n", i, V[i]);
 				}
 
 				for (int i = 0; i < N; ++i) {
-				printf("DIST[%d] = %0.8lf\n", i, DIST[i]);
+				printf("DIST[%d] = %0.10lf\n", i, DIST[i]);
 				}
 				*/
 
@@ -705,8 +707,8 @@ int main() {
 					nowR = R;
 					string p2string(std::to_string(P));
 
-					fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%s,%0.8lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
-					//fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf\n", w, x, y, z, objDist, nowR, P, S);
+					fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
+					//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 					*/
 					st = 0;
 					printf("stop=%d\n", st);
@@ -720,7 +722,7 @@ int main() {
 					robV = V[p][0][0][0][0][0];
 					robRotV = ROTV[p][0][0][0][0][0];
 					gD = sqrt(pow(goalX - robX, 2) + pow(goalY - robY, 2));
-					printf("robot pos=(%0.8lf,%0.8lf)\n", robX, robY);
+					printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
 					xP = robX;
 					yP = robY;
@@ -730,6 +732,8 @@ int main() {
 
 					humanMoving();
 
+					safety();
+
 					w = robX;
 					x = robY;
 					y = humanX;
@@ -738,8 +742,8 @@ int main() {
 					nowR = R;
 					//string p2string(std::to_string(P));
 
-					//fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%s,%0.8lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
-					fprintf(fp, "%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf,%0.8lf\n", w, x, y, z, objDist, nowR, P, S);
+					//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
+					fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 
 					if (gD < goalC) {
 						break;
@@ -792,7 +796,7 @@ int main() {
 
 
 
-	printf("human pos=(%0.8lf,%0.8lf)\n", humanX, humanY);
+	printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
 	fclose(fp);
 
 	//移動処理が終了したことの合図
@@ -806,44 +810,45 @@ int safety() {
 	double A, B;
 	double robVX = 0.0, robVY = 0.0;
 	double relVX = 0.0, relVY = 0.0, rV = 0.0;
-	double robRotH = 0.0;
+	double robRotH = 0.0;		//ロボットから見た人間の方向[rad]
 
 	robRotH = atan2(humanY - robY, humanX - robX);
 
+	//予測目標の算出
 	xP = xP + colliC * cos(robRotH);
 	yP = yP + colliC * sin(robRotH);
 
 	humanVP = sqrt(pow(xP - humanX, 2) + pow(yP - humanY, 2)) / tp;
-	//printf("humanVP=%0.8lf\n", humanVP);
+	//printf("humanVP=%0.10lf\n", humanVP);
 
 	if (humanVP > humanVMax) {
 		P = 0;						//人間が移動できる速度を超えているので人間の存在確率は0
-									//printf("P=%0.8lf\n", P);
+									//printf("P=%0.10lf\n", P);
 	}
 	else {
 		humanThetaP = atan2(yP - humanY, xP - humanX) - humanTheta;
-		//printf("humanThetaP=%0.8lf\n", humanThetaP);
+		//printf("humanThetaP=%0.10lf\n", humanThetaP);
 
 		robThetaP = atan2(humanY - yP, humanX - xP);
 
 		sigTheta = (1.35 * PI) / (8 * (humanV + 0.00001));
-		//printf("sigTheta=%0.8lf\n", sigTheta);
+		//printf("sigTheta=%0.10lf\n", sigTheta);
 
 
-		VV = (humanVP - miuV) / sigV / 2;
-		//printf("VV=%0.8lf\n", VV);
+		VV = (humanVP - miuV) / sigV / 1;
+		//printf("VV=%0.10lf\n", VV);
 
 		VO = humanThetaP / sigTheta * 2;
-		//printf("VO=%0.8lf\n", VO);
+		//printf("VO=%0.10lf\n", VO);
 
 		A = exp((pow(VV, 2) + pow(VO, 2)) / -2);
-		//printf("A=%0.8lf\n", A);
+		//printf("A=%0.10lf\n", A);
 
 		B = 2 * PI * sigV * sigTheta;
-		//printf("B=%0.8lf\n", B);
+		//printf("B=%0.10lf\n", B);
 
 		P = A / B;
-		//printf("P=%0.8lf	", P);
+		//printf("P=%0.10lf	", P);
 	}
 
 
@@ -855,6 +860,7 @@ int safety() {
 	relVX = robVX * cos(robThetaP) - humanVP * cos(humanThetaP);
 	relVY = robVY * sin(robThetaP) - humanVP * sin(humanThetaP);
 
+	/*
 	//人間とロボットの進路が交わらない場合，相対速度が存在しないものとする
 	if (relVX < 0 || relVY < 0) {
 		rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
@@ -862,14 +868,14 @@ int safety() {
 	else {
 		rV = 0.0;
 	}
-
-	//rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
+	*/
+	rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
 	S = humanW * robW * pow(rV, 2) / (humanW + robW) / 2;
-	//printf("S=%0.8lf	", S);
+	//printf("S=%0.10lf	", S);
 
 	//衝突リスクの計算
 	R = P * S;
-	//printf("risk num=%0.8lf\n", R);
+	//printf("risk num=%0.10lf\n", R);
 
 	//安全性の判定
 	if (R > 0.00000011 * nts) {
@@ -895,36 +901,36 @@ int routing() {
 	yP = yP + colliC * sin(robRotH);
 
 	humanVP = sqrt(pow(xP - humanX, 2) + pow(yP - humanY, 2)) / tp;
-	//printf("humanVP=%0.8lf\n", humanVP);
+	//printf("humanVP=%0.10lf\n", humanVP);
 
 	if (humanVP > humanVMax) {
 		P = 0;						//人間が移動できる速度を超えているので人間の存在確率は0
-		printf("P=%0.8lf\n", P);
+		printf("P=%0.10lf\n", P);
 	}
 	else {
 		humanThetaP = atan2(yP - humanY, xP - humanX) - humanTheta;
-		//printf("humanThetaP=%0.8lf\n", humanThetaP);
+		//printf("humanThetaP=%0.10lf\n", humanThetaP);
 
 		robThetaP = atan2(humanY - yP, humanX - xP);
 
 		sigTheta = (1.35 * PI) / (8 * (humanV + 0.00001));
-		//printf("sigTheta=%0.8lf\n", sigTheta);
+		//printf("sigTheta=%0.10lf\n", sigTheta);
 
 
-		VV = (humanVP - miuV) / sigV / 2;
-		//printf("VV=%0.8lf\n", VV);
+		VV = (humanVP - miuV) / sigV / 1;
+		//printf("VV=%0.10lf\n", VV);
 
 		VO = humanThetaP / sigTheta * 2;
-		//printf("VO=%0.8lf\n", VO);
+		//printf("VO=%0.10lf\n", VO);
 
 		A = exp((pow(VV, 2) + pow(VO, 2)) / -2);
-		//printf("A=%0.8lf\n", A);
+		//printf("A=%0.10lf\n", A);
 
 		B = 2 * PI * sigV * sigTheta;
-		//printf("B=%0.8lf\n", B);
+		//printf("B=%0.10lf\n", B);
 
 		P = A / B;
-		printf("P=%0.8lf\n", P);
+		printf("P=%0.10lf\n", P);
 	}
 
 
@@ -936,11 +942,11 @@ int routing() {
 	relVY = robVY * sin(robThetaP) - humanVP * sin(humanThetaP);
 	rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
 	S = humanW * robW * pow(rV, 2) / (humanW + robW) / 2;
-	//printf("S=%0.8lf\n", S);
+	//printf("S=%0.10lf\n", S);
 
 	//衝突リスクの計算
 	R = P * S;
-	//printf("risk num=%0.8lf\n", R);
+	//printf("risk num=%0.10lf\n", R);
 	*/
 
 	//回避軌道生成開始の判定
@@ -956,8 +962,10 @@ int humanMoving() {
 	//人間のタイムステップ毎の移動を処理
 	//humanX = humanX + humanV * ts * cos((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
 	//humanY = humanY + humanV * ts * sin((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
-	humanX = humanX - humanV * ts;
+	//humanX = humanX - humanV * ts;
 	//humanY = humanY - humanV * ts;
+	humanX = humanX + humanV * ts * cos(humanTheta);
+	humanY = humanY + humanV * ts * sin(humanTheta);
 
 	/*//方向転換45°
 	if (humanX > 2.5) {
