@@ -1,52 +1,53 @@
 #ifndef INCLUDE_OBJECT_HEADER
 #define INCLUDE_OBJECT_HEADER
 
+/* XYZ */
+typedef struct _Position Position;      // 座標
+typedef struct _Posture Posture;        // 姿勢
+typedef struct _Radian Radian;          // 角度
+typedef struct _VPosition VPosition;    // 速度
+typedef struct _VRadian VRadian;        // 回転速度
+
+
 typedef struct _Object *Object;
 
+Position PositionCreate(double x, double y, double z);
 // X[mm], Y[mm], Z[mm]
-double ObjectGetX(Object obj);
-double ObjectGetY(Object obj);
-double ObjectGetZ(Object obj);
+double PositionGetX(Position pos);
+double PositionGetY(Position pos);
+double PositionGetZ(Position pos);
 
-// O[deg], A[deg], T[deg]
-double ObjectGetO(Object obj);
-double ObjectGetA(Object obj);
-double ObjectGetZ(Object obj);
+Posture PostureCreate(double x, double y, double z);
+// X[deg], Y[deg], Z[deg]
+double PostureGetX(Posture pos);
+double PostureGetY(Posture pos);
+double PostureGetZ(Posture pos);
 
-// RX[rad], RY[rad], RZ[rad]
-double ObjectGetRX(Object obj);
-double ObjectGetRY(Object obj);
-double ObjectGetRZ(Object obj);
+Radian RadianCreate(double x, double y, double z);
+// X[rad], Y[rad], Z[rad]
+double RadianGetX(Radian pos);
+double RadianGetY(Radian pos);
+double RadianGetZ(Radian pos);
 
-// VX[mm/s], VY[mm/s], VZ[mm/s]
-double ObjectGetVX(Object obj);
-double ObjectGetVY(Object obj);
-double ObjectGetVZ(Object obj);
+VPosition VPositionCreate(double x, double y, double z);
+// X[mm/s], Y[mm/s], Z[mm/s]
+double VPositionGetX(VPosition pos);
+double VPositionGetY(VPosition pos);
+double VPositionGetZ(VPosition pos);
 
-// WEIGHT[kg]
-double ObjectGetW(Object obj);
+VRadian VRadianCreate(double x, double y, double z);
+// X[rad/s], Y[rad/s], Z[rad/s]
+double VRadianGetX(VPosition pos);
+double VRadianGetY(VPosition pos);
+double VRadianGetZ(VPosition pos);
 
-// X[mm], Y[mm], Z[mm] 
-// O[deg], A[deg], T[deg]
-// RX[rad], RY[rad], RZ[rad]
-// VX[mm/s], VY[mm/s], VZ[mm/s]
-// WEIGHT[kg]
-Object ObjectCreate(
-    double x, double y, double z,
-    double o, double a, double t,
-    double rx, double ry, double rz,
-    double vx, double vy, double vz,
-    double w
-);
+
+Object ObjectCreate(void);
 
 // 値の表示
 void ObjectPrint(Object obj);
 // 物体移動
 void ObjectMove(Object obj);
-// 位置方向の値セット
-void ObjectSetXYZ(Object obj, double x, double y, double z);
-// 速度の値セット
-void ObjectSetVXYZ(Object obj, double vx, double vy, double vz);
 // 物体の破壊
 Object ObjectDestroy(Object obj);
 

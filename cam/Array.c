@@ -9,13 +9,26 @@ typedef struct _Array
     double **data;
 } _Array;
 
+static double *CreateVector(int num) {
+    return (double*)malloc(sizeof(double) * num);
+}
+static double **CreateArray(int row, int col) {
+    int i;
+    double **array = (double**)malloc(sizeof(double*) * row);
+    for (i = 0; i < row; i++) array[i] = (double*)malloc(sizeof(double) * col);
+    return array;
+}
+static void Destroy(Array array) {
+    int i;
+    for (i = 0; i < array->row; i++) free(array->data[i]);
+    free(array->data);
+}
+
 Array ArrayCreate(int row, int col) {
     Array array = (Array)malloc(sizeof(_Array) * 1);
-    array->data = (double**)malloc(sizeof(double*) * row);
-    int i;
-    for (i = 0; i < col; i++) array->data[i] = (double*)malloc(sizeof(double) * row);
     array->row = row;
     array->col = col;
+    array->data = CreateArray(row, col);
     ArrayZeros(array);
     return array;
 }
@@ -54,14 +67,19 @@ void ArrayDIV(Array arrayA, Array arrayB) {
     for (i = 0; i < arrayA->row; i++) 
         for (j = 0; j < arrayA->col; j++) arrayA->data[i][j] /= arrayB->data[i][j];
 }
-// void ArrayDOT(Array arrayA, Array arrayB) {
-//     int i,j;
-//     for (i = 0; i < arrayA->row; i++) 
-//         for (j = 0; j < arrayA->col; j++) arrayA->data[i][j] /= arrayB->data[i][j];
-// }
-void ArrayDestroy(Array array) {
+double ArrayDOT(Array arrayA, Array arrayB) {
     int i;
-    for (i = 0; i < array->col; i++) free(array->data[i]);
-    free(array->data);
+    double sum = 0.;
+    for (i = 0; i < arrayA->col; i++) sum += arrayA->data[0][i] * arrayB->data[0][i];
+    return sum;
+}
+void ArrayPOW(Array arrayA, double x) {
+    int i, j, k;
+    for (i = 0; i < arrayA->row; i++) 
+        for (j = 0; j < arrayA->col; j++) 
+            for (k = 0; k < arrayA->col; k++) arrayA->data[i][j] *= arrayA->data[i][j];
+}
+void ArrayDestroy(Array array) {
+    Destroy(array);
     free(array);
 }
