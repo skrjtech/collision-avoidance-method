@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <sys/time.h>
+
 #include "common.h"
 #include "random.h"
 #include "Object.h"
@@ -11,6 +12,7 @@
 
 int main(void) {
     seed_set(12345);
-
+    Object Robot = ObjectCreate();
+    ObjectDestroy(Robot);
     return 0;
 }

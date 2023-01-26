@@ -17,6 +17,7 @@ typedef struct _Object
     Radian radian;       // [rad]  　回転
     VPosition vposition; // [mm/s] 　速度
     VRadian vradian;     // [rad/s]　回転速度 
+    void 
 } _Object;
 
 Position PositionCreate(double x, double y, double z) {
@@ -52,7 +53,7 @@ double VRadianGetY(VPosition pos) { return pos.y; };
 double VRadianGetZ(VPosition pos) { return pos.z; };
 
 Object ObjectCreate(void) {
-    Object obj;
+    Object obj = (Object)malloc(sizeof(_Object) * 1);
     return obj;
 }
 
