@@ -52,12 +52,6 @@ double robRotV = 0.0;			//ロボットの現在角速度[rad/s]
 
 								//double ROBOT_MAX_RAD = 1.57;
 double robDist = 0.0;			//ロボットが進む距離[m]
-
-double goalX = 2.0, goalY = 4.0;	//目標位置[m]
-double goalC = 0.175;			    //目標位置の半径[m]
-
-									//const int EVERY_TIMESTEP_NUM = 15;				//パーティクルの総数
-
 int pN;					        //一つのパーティクルから伸びる枝の数
 
 double gD = 0.0;				        //現在のロボットと目標位置の距離[m]
@@ -104,10 +98,10 @@ int main() {
 	srand(time(NULL));
 
 	//ロボットの現在位置を測定
-	robX = 2.0;
-	robY = 0.0;
+	robX = ROBOT_X_INIT;
+	robY = ROBOT_Y_INIT;
 	robV = 0.0;
-	robRot = PI / 2;
+	robRot = ROBOT_RAD_INIT;
 	robRotMax = ROBOT_MAX_RAD * TIMESTEP;
 
 	//人間の現在位置を測定
@@ -153,7 +147,7 @@ int main() {
 	//printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
 
 	//ロボットが目的位置に到達していない場合，移動を継続する
-	while (robX != goalX || robY != goalY)
+	while (robX != GOAL_X || robY != GOAL_Y )
 	{
 		//printf("robot start moving\n");
 
@@ -242,7 +236,7 @@ int main() {
 		else {
 			//objDist = sqrt(pow(humanX - robX, 2) + pow(humanY - robY, 2));
 			tp = 1;
-			robRotP = atan2(goalY - robY, goalX - robX);
+			robRotP = atan2(GOAL_Y  - robY, GOAL_X - robX);
 			robRotC = robRotP - robRot;
 			if (robRotC > robRotMax) {
 				robRotP = robRot + robRotMax;
@@ -262,8 +256,8 @@ int main() {
 			if (r == 0) {
 				//ロボットが人間から十分に離れている場合，目標位置に直進
 				//printf("robot moving straight\n");
-				//robRot = atan((goalY - robY) / (goalX - robX));
-				robRotP = atan2(goalY - robY, goalX - robX);
+				//robRot = atan((GOAL_Y  - robY) / (GOAL_X - robX));
+				robRotP = atan2(GOAL_Y  - robY, GOAL_X - robX);
 				robRotC = robRotP - robRotP;
 				//単位タイムステップにおける最大旋回角度を超過した場合，最大旋回角度に丸める
 				if (robRotC > robRotMax) {
@@ -278,7 +272,7 @@ int main() {
 				robX = robX + ROBOT_MAX_VELOCITY * TIMESTEP * cos(robRot);
 				robY = robY + ROBOT_MAX_VELOCITY * TIMESTEP * sin(robRot);
 				robV = ROBOT_MAX_VELOCITY;
-				gD = sqrt(pow(goalX - robX, 2) + pow(goalY - robY, 2));
+				gD = sqrt(pow(GOAL_X - robX, 2) + pow(GOAL_Y  - robY, 2));
 				printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
 
@@ -308,7 +302,7 @@ int main() {
 				fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 
 
-				if (gD < goalC) {
+				if (gD < GOAL_DISTANCE) {
 					break;
 				}
 			}
@@ -333,7 +327,7 @@ int main() {
 				A[0][0][0][0][0][0] = 0;
 				ROTA[0][0][0][0][0][0] = 0;
 
-				GD[0][0][0][0][0][0] = sqrt(pow(goalX - X[0][0][0][0][0][0], 2) + pow(goalY - Y[0][0][0][0][0][0], 2));
+				GD[0][0][0][0][0][0] = sqrt(pow(GOAL_X - X[0][0][0][0][0][0], 2) + pow(GOAL_Y  - Y[0][0][0][0][0][0], 2));
 
 				//各回避軌道経由点をランダムな位置に生成し，安全性を確認する
 				for (int i = 1; i < EVERY_TIMESTEP_NUM; i++) {
@@ -367,7 +361,7 @@ int main() {
 					X[i][0][0][0][0][0] = X[0][0][0][0][0][0] + DIST[i][0][0][0][0][0] * cos(ROT[i][0][0][0][0][0]);
 					Y[i][0][0][0][0][0] = Y[0][0][0][0][0][0] + DIST[i][0][0][0][0][0] * sin(ROT[i][0][0][0][0][0]);
 
-					GD[i][0][0][0][0][0] = sqrt(pow(goalX - X[i][0][0][0][0][0], 2) + pow(goalY - Y[i][0][0][0][0][0], 2));
+					GD[i][0][0][0][0][0] = sqrt(pow(GOAL_X - X[i][0][0][0][0][0], 2) + pow(GOAL_Y  - Y[i][0][0][0][0][0], 2));
 
 					xP = X[i][0][0][0][0][0];
 					yP = Y[i][0][0][0][0][0];
@@ -378,6 +372,7 @@ int main() {
 
 					PP[i][0][0][0][0][0] = P;
 					RISKP[i][0][0][0][0][0] = R;
+					RISKT[i][0][0][0][0][0] = RISKP[i][0][0][0][0][0];
 
 					objDist = sqrt(pow(humanX - xP, 2) + pow(humanY - yP, 2));
 
@@ -414,7 +409,7 @@ int main() {
 							X[i][ii][0][0][0][0] = X[i][0][0][0][0][0] + DIST[i][ii][0][0][0][0] * cos(ROT[i][ii][0][0][0][0]);
 							Y[i][ii][0][0][0][0] = Y[i][0][0][0][0][0] + DIST[i][ii][0][0][0][0] * sin(ROT[i][ii][0][0][0][0]);
 
-							GD[i][ii][0][0][0][0] = sqrt(pow(goalX - X[i][ii][0][0][0][0], 2) + pow(goalY - Y[i][ii][0][0][0][0], 2));
+							GD[i][ii][0][0][0][0] = sqrt(pow(GOAL_X - X[i][ii][0][0][0][0], 2) + pow(GOAL_Y  - Y[i][ii][0][0][0][0], 2));
 
 							xP = X[i][ii][0][0][0][0];
 							yP = Y[i][ii][0][0][0][0];
@@ -425,6 +420,7 @@ int main() {
 
 							PP[i][ii][0][0][0][0] = P;
 							RISKP[i][ii][0][0][0][0] = R;
+							RISKT[i][ii][0][0][0][0] = RISKP[i][0][0][0][0][0] + RISKP[i][ii][0][0][0][0];
 
 							objDist = sqrt(pow(humanX - xP, 2) + pow(humanY - yP, 2));
 
@@ -461,7 +457,7 @@ int main() {
 									X[i][ii][iii][0][0][0] = X[i][ii][0][0][0][0] + DIST[i][ii][iii][0][0][0] * cos(ROT[i][ii][iii][0][0][0]);
 									Y[i][ii][iii][0][0][0] = Y[i][ii][0][0][0][0] + DIST[i][ii][iii][0][0][0] * sin(ROT[i][ii][iii][0][0][0]);
 
-									GD[i][ii][iii][0][0][0] = sqrt(pow(goalX - X[i][ii][iii][0][0][0], 2) + pow(goalY - Y[i][ii][iii][0][0][0], 2));
+									GD[i][ii][iii][0][0][0] = sqrt(pow(GOAL_X - X[i][ii][iii][0][0][0], 2) + pow(GOAL_Y  - Y[i][ii][iii][0][0][0], 2));
 
 									xP = X[i][ii][iii][0][0][0];
 									yP = Y[i][ii][iii][0][0][0];
@@ -472,6 +468,7 @@ int main() {
 
 									PP[i][ii][iii][0][0][0] = P;
 									RISKP[i][ii][iii][0][0][0] = R;
+									RISKT[i][ii][iii][0][0][0] = RISKP[i][0][0][0][0][0] + RISKP[i][ii][0][0][0][0] + RISKP[i][ii][iii][0][0][0];
 
 									objDist = sqrt(pow(humanX - xP, 2) + pow(humanY - yP, 2));
 
@@ -508,7 +505,7 @@ int main() {
 											X[i][ii][iii][iv][0][0] = X[i][ii][iii][0][0][0] + DIST[i][ii][iii][iv][0][0] * cos(ROT[i][ii][iii][iv][0][0]);
 											Y[i][ii][iii][iv][0][0] = Y[i][ii][iii][0][0][0] + DIST[i][ii][iii][iv][0][0] * sin(ROT[i][ii][iii][iv][0][0]);
 
-											GD[i][ii][iii][iv][0][0] = sqrt(pow(goalX - X[i][ii][iii][iv][0][0], 2) + pow(goalY - Y[i][ii][iii][iv][0][0], 2));
+											GD[i][ii][iii][iv][0][0] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][0][0], 2) + pow(GOAL_Y  - Y[i][ii][iii][iv][0][0], 2));
 
 											xP = X[i][ii][iii][iv][0][0];
 											yP = Y[i][ii][iii][iv][0][0];
@@ -519,6 +516,7 @@ int main() {
 
 											PP[i][ii][iii][iv][0][0] = P;
 											RISKP[i][ii][iii][iv][0][0] = R;
+											RISKT[i][ii][iii][iv][0][0] = RISKP[i][0][0][0][0][0] + RISKP[i][ii][0][0][0][0] + RISKP[i][ii][iii][0][0][0] + RISKP[i][ii][iii][iv][0][0];
 
 											objDist = sqrt(pow(humanX - xP, 2) + pow(humanY - yP, 2));
 
@@ -555,7 +553,7 @@ int main() {
 													X[i][ii][iii][iv][v][0] = X[i][ii][iii][iv][0][0] + DIST[i][ii][iii][iv][v][0] * cos(ROT[i][ii][iii][iv][v][0]);
 													Y[i][ii][iii][iv][v][0] = Y[i][ii][iii][iv][0][0] + DIST[i][ii][iii][iv][v][0] * sin(ROT[i][ii][iii][iv][v][0]);
 
-													GD[i][ii][iii][iv][v][0] = sqrt(pow(goalX - X[i][ii][iii][iv][v][0], 2) + pow(goalY - Y[i][ii][iii][iv][v][0], 2));
+													GD[i][ii][iii][iv][v][0] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][v][0], 2) + pow(GOAL_Y  - Y[i][ii][iii][iv][v][0], 2));
 
 													xP = X[i][ii][iii][iv][v][0];
 													yP = Y[i][ii][iii][iv][v][0];
@@ -566,6 +564,7 @@ int main() {
 
 													PP[i][ii][iii][iv][v][0] = P;
 													RISKP[i][ii][iii][iv][v][0] = R;
+													RISKT[i][ii][iii][iv][v][0] = RISKP[i][0][0][0][0][0] + RISKP[i][ii][0][0][0][0] + RISKP[i][ii][iii][0][0][0] + RISKP[i][ii][iii][iv][0][0] + RISKP[i][ii][iii][iv][v][0];
 
 													objDist = sqrt(pow(humanX - xP, 2) + pow(humanY - yP, 2));
 
@@ -602,7 +601,7 @@ int main() {
 															X[i][ii][iii][iv][v][vi] = X[i][ii][iii][iv][v][0] + DIST[i][ii][iii][iv][v][vi] * cos(ROT[i][ii][iii][iv][v][vi]);
 															Y[i][ii][iii][iv][v][vi] = Y[i][ii][iii][iv][v][0] + DIST[i][ii][iii][iv][v][vi] * sin(ROT[i][ii][iii][iv][v][vi]);
 
-															GD[i][ii][iii][iv][v][vi] = sqrt(pow(goalX - X[i][ii][iii][iv][v][vi], 2) + pow(goalY - Y[i][ii][iii][iv][v][vi], 2));
+															GD[i][ii][iii][iv][v][vi] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][v][vi], 2) + pow(GOAL_Y  - Y[i][ii][iii][iv][v][vi], 2));
 
 															xP = X[i][ii][iii][iv][v][vi];
 															yP = Y[i][ii][iii][iv][v][vi];
@@ -613,6 +612,7 @@ int main() {
 
 															PP[i][ii][iii][iv][v][vi] = P;
 															RISKP[i][ii][iii][iv][v][vi] = R;
+															RISKT[i][ii][iii][iv][v][vi] = RISKP[i][0][0][0][0][0] + RISKP[i][ii][0][0][0][0] + RISKP[i][ii][iii][0][0][0] + RISKP[i][ii][iii][iv][0][0] + RISKP[i][ii][iii][iv][v][0] + RISKP[i][ii][iii][iv][v][vi];
 
 															objDist = sqrt(pow(humanX - xP, 2) + pow(humanY - yP, 2));
 
@@ -682,14 +682,17 @@ int main() {
 								for (int t5 = 0; t5 < EVERY_TIMESTEP_NUM; ++t5) {
 									for (int t6 = 0; t6 < EVERY_TIMESTEP_NUM; ++t6) {
 										for (int t7 = 0; t7 < EVERY_TIMESTEP_NUM; ++t7) {
-											if (GD[t1][t2][t3][t4][t5][t6] != 0) {
-												if (minGD > GD[t1][t2][t3][t4][t5][t6]) {
-													minGD = GD[t1][t2][t3][t4][t5][t6];
-													G = t1;
-													nowR = RISKP[t1][0][0][0][0][0];
-													//P = PP[t1][0][0][0][0][0];
+											if (RISKT[t1][t2][t3][t4][t5][t6] < 0.00000011) {
+												if (GD[t1][t2][t3][t4][t5][t6] != 0) {
+													if (minGD > GD[t1][t2][t3][t4][t5][t6]) {
+														minGD = GD[t1][t2][t3][t4][t5][t6];
+														G = t1;
+														nowR = RISKP[t1][0][0][0][0][0];
+														//P = PP[t1][0][0][0][0][0];
+													}
 												}
 											}
+											
 										}
 									}
 								}
@@ -729,7 +732,7 @@ int main() {
 					robRot = ROT[p][0][0][0][0][0];
 					robV = V[p][0][0][0][0][0];
 					robRotV = ROTV[p][0][0][0][0][0];
-					gD = sqrt(pow(goalX - robX, 2) + pow(goalY - robY, 2));
+					gD = sqrt(pow(GOAL_X - robX, 2) + pow(GOAL_Y  - robY, 2));
 					printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
 					xP = robX;
@@ -755,7 +758,7 @@ int main() {
 					//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
 					fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 
-					if (gD < goalC) {
+					if (gD < GOAL_DISTANCE) {
 						break;
 					}
 				}

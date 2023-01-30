@@ -55,10 +55,10 @@
 #define AREA_X          4.0     // エリアX [m]
 #define AREA_Y          4.0     // エリアY [m]
 #define ROBOT_X_INIT    2.0     // 初期位置X [m]
-#define ROBOT_Y_INIT    4.0     // 初期位置Y [m]
+#define ROBOT_Y_INIT    0.0     // 初期位置Y [m]
 #define ROBOT_RAD_INIT  PI / 2  // 初期方向 [rad]
 #define GOAL_X          2.0     // 目的位置X [m]
 #define GOAL_Y          4.0     // 目的位置Y [m]
-#define GOAL_DADIUS     0.35    // 目的位置での接触判定距離 [m]
+#define GOAL_DISTANCE     0.35    // 目的位置での接触判定距離 [m]
 
 #endif
