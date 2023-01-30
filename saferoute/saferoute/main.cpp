@@ -2,7 +2,7 @@
 #include <math.h>
 #include <iostream>
 #include <time.h>
-
+#include "common.h"
 #include <string>
 
 #define _USE_MATH_DEFINES //êîílââéZíËêîÇ™íËã`Ç≥ÇÍÇΩÉwÉbÉ_ÉtÉ@ÉCÉãÇÃì«Ç›çûÇ›
@@ -16,32 +16,26 @@ using std::string;
 
 double humanX = 0.0, humanY = 0.0;	        //êlä‘ÇÃåªç›à íu[m]
 double humanTheta = 0.0;		        //êlä‘ÇÃåªç›ÇÃï˚å¸[Åã]
+double humanXP, humanYP;				//ëzíËÇ≥ÇÍÇÈêlä‘ÇÃà íu[m]
 double xP = 0.0, yP = 0.0;			        //êlä‘ÇÃà⁄ìÆó\ë™ì_[ml
 double xV = 0.0;					//ÉçÉ{ÉbÉgÇÃó\ë™ë¨ìx[m/s]
-double humanC = 0.2;	        //êlä‘ÇÃîºåa(å®ïù)[m]
-double robC = 0.175;				//ÉçÉ{ÉbÉgÇÃîºåa[m]
 double colliC = 0;				//êlä‘Ç∆ÉçÉ{ÉbÉgÇÃê⁄êGãóó£[m]
 
-//double humanV = 1.4 / 2;	        //êlä‘ÇÃà⁄ìÆë¨ìx[m/s]
-double humanV = 0.5;								//double humanV = 1.4;
+								//double humanV = 1.4 / 2;	        //êlä‘ÇÃà⁄ìÆë¨ìx[m/s]
+double humanV = 0.9;								//double humanV = 1.4;
 
-double humanVMax = 3.6;				//êlä‘ÇÃç≈ëÂë¨ìx[m/s]
 double humanVP = 0.0;			        //êlä‘ÇÃà⁄ìÆÉmÉãÉÄ
 
 double humanThetaP = 0.0;		        //êlä‘ÇÃåªç›à íuÇ©ÇÁÇ›ÇΩÇ†ÇÈì_ÇÃï˚å¸[Åã]
 double robThetaP = 0.0;					//ÉçÉ{ÉbÉgÇÃÇ†ÇÈà íuÇ©ÇÁå©ÇΩåªç›ÇÃêlä‘ÇÃï˚å¸[Åã]
 
-double sigV = 0.8 / 2;	        //êlä‘ÇÃà⁄ìÆë¨ìxÇÃïWèÄïŒç∑
-double sigTheta = 0.0;		        //êlä‘ÇÃêiçsï˚å¸ÇÃïWèÄïŒç∑
 
 double miuV = 0.0;			        //êlä‘ÇÃà⁄ìÆë¨ìxÇÃä˙ë“íl[m/s]
 
-double humanW = 4.4;		        //êlä‘ÇÃéøó [kg]
-double robW = 6.3;		        //ÉçÉ{ÉbÉgÇÃéøó [kg]
+double SIGMA_THETA = 0.0; //êlä‘ÇÃêiçsï˚å¸ÇÃïWèÄïŒç∑
 
-double ts = 0.5 * 1;		        //íPà É^ÉCÉÄÉXÉeÉbÉvéûä‘[s]
 double tp = 0.0;                      //êlä‘ÇÃà⁄ìÆó\ë™ÇÃéûä‘[s]
-int nts = 6;				        //É^ÉCÉÄÉXÉeÉbÉvêî
+
 
 double VV = 0.0;				        //ïœêîÇP
 double VO = 0.0;				        //ïœêîÇQ
@@ -55,33 +49,32 @@ double robX = 0.0, robY = 0.0;		        //ÉçÉ{ÉbÉgÇÃà íu[m]
 double robRot = 0.0;			        //ÉçÉ{ÉbÉgÇÃåªç›ï˚å¸[rad]
 double robV = 0.0;			//ÉçÉ{ÉbÉgÇÃåªç›ë¨ìx[m/s]
 double robRotV = 0.0;			//ÉçÉ{ÉbÉgÇÃåªç›äpë¨ìx[rad/s]
-double robVMax = 1.4 / 2;			//ÉçÉ{ÉbÉgÇÃç≈ëÂë¨ìx[m/s]
-double robRadMax = 6.28;		//ÉçÉ{ÉbÉgÇÃç≈ëÂê˘âÒë¨ìx[rad/s]
-//double robRadMax = 1.57;
+
+								//double ROBOT_MAX_RAD = 1.57;
 double robDist = 0.0;			//ÉçÉ{ÉbÉgÇ™êiÇﬁãóó£[m]
 
 double goalX = 2.0, goalY = 4.0;	//ñ⁄ïWà íu[m]
-double goalC = 0.35;			    //ñ⁄ïWà íuÇÃîºåa[m]
+double goalC = 0.175;			    //ñ⁄ïWà íuÇÃîºåa[m]
 
-								//const int N = 15;				//ÉpÅ[ÉeÉBÉNÉãÇÃëçêî
-const int N = 15 + 1;               //ÉpÅ[ÉeÉBÉNÉãÇÃëçêîÅ@N = 1 + pN ^ 1 + pN ^ 2 + ... + pN ^ NTS
+									//const int EVERY_TIMESTEP_NUM = 15;				//ÉpÅ[ÉeÉBÉNÉãÇÃëçêî
+
 int pN;					        //àÍÇ¬ÇÃÉpÅ[ÉeÉBÉNÉãÇ©ÇÁêLÇ—ÇÈé}ÇÃêî
 
 double gD = 0.0;				        //åªç›ÇÃÉçÉ{ÉbÉgÇ∆ñ⁄ïWà íuÇÃãóó£[m]
 double objDist = 0.0;			        //êlä‘Ç∆ÉçÉ{ÉbÉgÇÃãóó£[m]
 double nowR = 0.0;						//åªç›ÇÃè’ìÀÉäÉXÉNíl
-double X[N][N][N][N][N][N], Y[N][N][N][N][N][N];		        //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãÇÃç¿ïW[m]
-double V[N][N][N][N][N][N];                    //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃë¨ìx[m/s]
-double A[N][N][N][N][N][N];                    //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃâ¡ë¨ìx[m/s^2]
-double ROT[N][N][N][N][N][N];                  //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃå¸Ç´[rad]
-double ROTV[N][N][N][N][N][N];                 //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃäpë¨ìx[rad/s]
-double ROTA[N][N][N][N][N][N];                 //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃäpâ¡ë¨ìx[rad/s^2]
-double DIST[N][N][N][N][N][N];                 //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãÇÃêiÇﬁãóó£[m]
-double GD[N][N][N][N][N][N];			        //äeÉpÅ[ÉeÉBÉNÉãÇ∆ñ⁄ïWà íuÇÃãóó£[m]
-double RISKP[N][N][N][N][N][N];				//äeâÒîãOìπåoóRì_åÛï‚ÇÃè’ìÀÉäÉXÉNíl
-double RISKT[N][N][N][N][N][N];				//äeâÒîãOìπåÛï‚ÇÃêœï™ÉäÉXÉNíl
-double PP[N][N][N][N][N][N];					//äeâÒîãOìπåoóRì_åÛï‚Ç…Ç®ÇØÇÈêlä‘ÇÃë∂ç›ämó¶
-												//int prev_p[N];			        //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãÇ∆ê⁄ë±Ç∑ÇÈëOÇÃÉpÅ[ÉeÉBÉNÉãî‘çÜ
+double X[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM], Y[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];		        //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãÇÃç¿ïW[m]
+double V[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                    //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃë¨ìx[m/s]
+double A[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                    //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃâ¡ë¨ìx[m/s^2]
+double ROT[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                  //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃå¸Ç´[rad]
+double ROTV[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                 //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃäpë¨ìx[rad/s]
+double ROTA[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                 //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãç¿ïWÇ…Ç®ÇØÇÈÉçÉ{ÉbÉgÇÃäpâ¡ë¨ìx[rad/s^2]
+double DIST[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                 //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãÇÃêiÇﬁãóó£[m]
+double GD[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];			        //äeÉpÅ[ÉeÉBÉNÉãÇ∆ñ⁄ïWà íuÇÃãóó£[m]
+double RISKP[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				//äeâÒîãOìπåoóRì_åÛï‚ÇÃè’ìÀÉäÉXÉNíl
+double RISKT[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				//äeâÒîãOìπåÛï‚ÇÃêœï™ÉäÉXÉNíl
+double PP[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];					//äeâÒîãOìπåoóRì_åÛï‚Ç…Ç®ÇØÇÈêlä‘ÇÃë∂ç›ämó¶
+												//int prev_p[EVERY_TIMESTEP_NUM];			        //Nî‘ñ⁄ÇÃÉpÅ[ÉeÉBÉNÉãÇ∆ê⁄ë±Ç∑ÇÈëOÇÃÉpÅ[ÉeÉBÉNÉãî‘çÜ
 
 double robXP = 0.0, robYP = 0.0;	//ç≈íZà⁄ìÆÇ∑ÇÈç€ÇÃéüÇÃÉçÉ{ÉbÉgÇÃó\ë™à íu[m/s]
 double robRotP = 0.0;				//ç≈íZà⁄ìÆÇ∑ÇÈç€ÇÃéüÇÃÉçÉ{ÉbÉgÇÃó\ë™äpìx[rad]
@@ -91,7 +84,7 @@ double robRotC = 0.0;				//íPà É^ÉCÉÄÉXÉeÉbÉvÇ…Ç®ÇØÇÈç≈íZà⁄ìÆÇÃç€ÇÃÉçÉ{ÉbÉgÇÃê˘â
 
 int frag = 0;
 
-int q[N][N][N][N][N][N];				        //à¿ëSê´ï]âøyes/no=0/1
+int q[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				        //à¿ëSê´ï]âøyes/no=0/1
 int r;							//âÒîãOìπê∂ê¨îªíËno/yes=0/1
 int s;                          //ï]âøílèoóÕóp
 int safe = 0;						//à¿ëSï]âøyes/no=0/1
@@ -115,30 +108,32 @@ int main() {
 	robY = 0.0;
 	robV = 0.0;
 	robRot = PI / 2;
-	robRotMax = robRadMax * ts;
+	robRotMax = ROBOT_MAX_RAD * TIMESTEP;
 
 	//êlä‘ÇÃåªç›à íuÇë™íË
 	humanX = 4.0;
-	humanY = 0.0;
-	humanTheta = PI * 3 / 4;
+	humanY = 2.0;
+	humanTheta = PI * 4 / 4;
 	miuV = humanV;
 
-	colliC = humanC + robC;
+	colliC = HUMAN_RADIUS + ROBOT_RADIUS;
 
 	//â¬î\ê´ãÛä‘ÇÃê∂ê¨
 	double robPAcc = 1.4;				//â¬î\ê´ãÛä‘ÇÃêÓÇÃîºåa[m/s^2]
 	double robPRotAcc = 2.09;			//â¬î\ê´ãÛä‘ÇÃêÓäp[rad/s^2]
 
-	//åãâ ï\é¶ÉtÉ@ÉCÉãÇÃçÏê¨
+										//åãâ ï\é¶ÉtÉ@ÉCÉãÇÃçÏê¨
 	fopen_s(&fp, "exam1.csv", "wt");
 	fprintf(fp, "robX,robY,humanX,humanY,");
 	fprintf(fp, "OD,nowRisk,humPred,S,st\n");
 
-	printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
+	//printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 	tp = 1;
 	xP = robX;
 	yP = robY;
 	xV = robV;
+	humanXP = humanX;
+	humanYP = humanY;
 	safety();
 
 	double w, x, y, z;
@@ -155,32 +150,32 @@ int main() {
 
 
 
-	printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
+	//printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
 
 	//ÉçÉ{ÉbÉgÇ™ñ⁄ìIà íuÇ…ìûíBÇµÇƒÇ¢Ç»Ç¢èÍçáÅCà⁄ìÆÇåpë±Ç∑ÇÈ
 	while (robX != goalX || robY != goalY)
 	{
-		printf("robot start moving\n");
+		//printf("robot start moving\n");
 
 		//ÉçÉ{ÉbÉgÇ™äÎåØâÒîÇÃÇΩÇﬂÇÃí‚é~ìÆçÏÇçsÇ¡ÇƒÇ¢ÇÈÇ©
 		if (st == 0) {
-			printf("robot stopping\n");
-			tp = 1;
+			//printf("robot stopping\n");
+			tp = 0.5;
 
 			//äpë¨ìxÇ0Ç…ãﬂÇ√ÇØÇÈ
 			if (robRotV > 0) {
-				robRotV = robRotV - robPRotAcc * ts;
+				robRotV = robRotV - robPRotAcc * TIMESTEP;
 				if (robRotV > 0) {
-					robRot = robRot + robRotV * ts - robPRotAcc * ts * ts / 2;
+					robRot = robRot + robRotV * TIMESTEP - robPRotAcc * TIMESTEP * TIMESTEP / 2;
 				}
 				else {
 					robRotV = 0;
 				}
 			}
 			else if (robRotV < 0) {
-				robRotV = robRotV + robPRotAcc * ts;
+				robRotV = robRotV + robPRotAcc * TIMESTEP;
 				if (robRotV < 0) {
-					robRot = robRot + robRotV * ts + robPRotAcc * ts * ts / 2;
+					robRot = robRot + robRotV * TIMESTEP + robPRotAcc * TIMESTEP * TIMESTEP / 2;
 				}
 				else {
 					robRotV = 0;
@@ -189,18 +184,18 @@ int main() {
 
 			//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
 			if (robV > 0) {
-				robV = robV - robPAcc * ts;
+				robV = robV - robPAcc * TIMESTEP;
 				if (robV > 0) {
-					robDist = robV * ts - robPAcc * ts * ts / 2;
+					robDist = robV * TIMESTEP - robPAcc * TIMESTEP * TIMESTEP / 2;
 				}
 				else {
 					robV = 0;
 				}
 			}
 			else if (robV < 0) {
-				robV = robV + robPAcc * ts;
+				robV = robV + robPAcc * TIMESTEP;
 				if (robV < 0) {
-					robDist = robV * ts + robPAcc * ts * ts / 2;
+					robDist = robV * TIMESTEP + robPAcc * TIMESTEP * TIMESTEP / 2;
 				}
 				else {
 					robV = 0;
@@ -213,7 +208,8 @@ int main() {
 			xP = robX;
 			yP = robY;
 			xV = robV;
-
+			humanXP = humanX;
+			humanYP = humanY;
 			safe = safety();
 
 			humanMoving();
@@ -237,7 +233,7 @@ int main() {
 
 			if (safe == 0) {
 				st = 1;
-				printf("safe route regain\n");
+				//printf("safe route regain\n");
 			}
 			else {
 
@@ -254,16 +250,18 @@ int main() {
 			else if (robRotC < -1 * robRotMax) {
 				robRotP = robRot - robRotMax;
 			}
-			robXP = robX + robVMax * ts * cos(robRotP);
-			robYP = robY + robVMax * ts * sin(robRotP);
+			robXP = robX + ROBOT_MAX_VELOCITY * 2 * TIMESTEP * cos(robRotP);
+			robYP = robY + ROBOT_MAX_VELOCITY * 2 * TIMESTEP * sin(robRotP);
 			xP = robXP;
 			yP = robYP;
-			xV = robVMax;
+			xV = ROBOT_MAX_VELOCITY;
+			humanXP = humanX + humanV * cos(humanTheta);
+			humanYP = humanY + humanV * sin(humanTheta);
 			r = routing();
 
 			if (r == 0) {
 				//ÉçÉ{ÉbÉgÇ™êlä‘Ç©ÇÁè\ï™Ç…ó£ÇÍÇƒÇ¢ÇÈèÍçáÅCñ⁄ïWà íuÇ…íºêi
-				printf("robot moving straight\n");
+				//printf("robot moving straight\n");
 				//robRot = atan((goalY - robY) / (goalX - robX));
 				robRotP = atan2(goalY - robY, goalX - robX);
 				robRotC = robRotP - robRotP;
@@ -277,9 +275,9 @@ int main() {
 				else {
 					robRot = robRotP;
 				}
-				robX = robX + robVMax * ts * cos(robRot);
-				robY = robY + robVMax * ts * sin(robRot);
-				robV = robVMax;
+				robX = robX + ROBOT_MAX_VELOCITY * TIMESTEP * cos(robRot);
+				robY = robY + ROBOT_MAX_VELOCITY * TIMESTEP * sin(robRot);
+				robV = ROBOT_MAX_VELOCITY;
 				gD = sqrt(pow(goalX - robX, 2) + pow(goalY - robY, 2));
 				printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
@@ -288,6 +286,8 @@ int main() {
 				xP = robXP;
 				yP = robYP;
 				xV = robV;
+				humanXP = humanX;
+				humanYP = humanY;
 				safety();
 
 				humanMoving();
@@ -336,33 +336,33 @@ int main() {
 				GD[0][0][0][0][0][0] = sqrt(pow(goalX - X[0][0][0][0][0][0], 2) + pow(goalY - Y[0][0][0][0][0][0], 2));
 
 				//äeâÒîãOìπåoóRì_ÇÉâÉìÉ_ÉÄÇ»à íuÇ…ê∂ê¨ÇµÅCà¿ëSê´ÇämîFÇ∑ÇÈ
-				for (int i = 1; i < N; i++) {
-					tp = ts;
+				for (int i = 1; i < EVERY_TIMESTEP_NUM; i++) {
+					tp = TIMESTEP;
 
 					ROTA[i][0][0][0][0][0] = ROTA[0][0][0][0][0][0] + (double)rand() / 32767.0 * 2 * robPRotAcc - robPRotAcc;
-					ROTV[i][0][0][0][0][0] = ROTV[0][0][0][0][0][0] + ROTA[i][0][0][0][0][0] * ts;
+					ROTV[i][0][0][0][0][0] = ROTV[0][0][0][0][0][0] + ROTA[i][0][0][0][0][0] * TIMESTEP;
 
 					//ç≈ëÂäpë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂäpë¨ìxÇ…ä€ÇﬂÇÈ
-					if (ROTV[i][0][0][0][0][0] > robRadMax) {
-						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] + robRadMax * ts;
+					if (ROTV[i][0][0][0][0][0] > ROBOT_MAX_RAD) {
+						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
 					}
-					else if (ROTV[i][0][0][0][0][0] < -1 * robRadMax) {
-						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] - robRadMax * ts;
+					else if (ROTV[i][0][0][0][0][0] < -1 * ROBOT_MAX_RAD) {
+						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
 					}
 					else {
-						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] + ROTV[0][0][0][0][0][0] * ts + ROTA[i][0][0][0][0][0] * ts * ts / 2;
+						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] + ROTV[0][0][0][0][0][0] * TIMESTEP + ROTA[i][0][0][0][0][0] * TIMESTEP * TIMESTEP / 2;
 					}
 					A[i][0][0][0][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
-					V[i][0][0][0][0][0] = V[0][0][0][0][0][0] + A[i][0][0][0][0][0] * ts;
+					V[i][0][0][0][0][0] = V[0][0][0][0][0][0] + A[i][0][0][0][0][0] * TIMESTEP;
 					//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
-					if (V[i][0][0][0][0][0] > robVMax) {
-						DIST[i][0][0][0][0][0] = robVMax * ts;
+					if (V[i][0][0][0][0][0] > ROBOT_MAX_VELOCITY) {
+						DIST[i][0][0][0][0][0] = ROBOT_MAX_VELOCITY * TIMESTEP;
 					}
-					else if (V[i][0][0][0][0][0] < -1 * robVMax) {
-						DIST[i][0][0][0][0][0] = -1 * robVMax * ts;
+					else if (V[i][0][0][0][0][0] < -1 * ROBOT_MAX_VELOCITY) {
+						DIST[i][0][0][0][0][0] = -1 * ROBOT_MAX_VELOCITY * TIMESTEP;
 					}
 					else {
-						DIST[i][0][0][0][0][0] = V[0][0][0][0][0][0] * ts + A[i][0][0][0][0][0] * ts * ts / 2;
+						DIST[i][0][0][0][0][0] = V[0][0][0][0][0][0] * TIMESTEP + A[i][0][0][0][0][0] * TIMESTEP * TIMESTEP / 2;
 					}
 					X[i][0][0][0][0][0] = X[0][0][0][0][0][0] + DIST[i][0][0][0][0][0] * cos(ROT[i][0][0][0][0][0]);
 					Y[i][0][0][0][0][0] = Y[0][0][0][0][0][0] + DIST[i][0][0][0][0][0] * sin(ROT[i][0][0][0][0][0]);
@@ -372,6 +372,8 @@ int main() {
 					xP = X[i][0][0][0][0][0];
 					yP = Y[i][0][0][0][0][0];
 					xV = V[i][0][0][0][0][0];
+					humanXP = humanX + humanV * TIMESTEP * cos(humanTheta);
+					humanYP = humanY + humanV * TIMESTEP * sin(humanTheta);
 					q[i][0][0][0][0][0] = safety();
 
 					PP[i][0][0][0][0][0] = P;
@@ -381,33 +383,33 @@ int main() {
 
 					if (q[i][0][0][0][0][0] == 0 /*&& objDist > colliC*/) {
 						//printf("[%d][0][0][0] is safe\n", i);
-						for (int ii = 1; ii < N; ++ii) {
-							tp = 2 * ts;
+						for (int ii = 1; ii < EVERY_TIMESTEP_NUM; ++ii) {
+							tp = 1 * TIMESTEP;
 
 							ROTA[i][ii][0][0][0][0] = ROTA[i][0][0][0][0][0] + (double)rand() / 32767.0 * 2 * robPRotAcc - robPRotAcc;
-							ROTV[i][ii][0][0][0][0] = ROTV[i][0][0][0][0][0] + ROTA[i][ii][0][0][0][0] * ts;
+							ROTV[i][ii][0][0][0][0] = ROTV[i][0][0][0][0][0] + ROTA[i][ii][0][0][0][0] * TIMESTEP;
 
 							//ç≈ëÂäpë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂäpë¨ìxÇ…ä€ÇﬂÇÈ
-							if (ROTV[i][ii][0][0][0][0] > robRadMax) {
-								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] + robRadMax * ts;
+							if (ROTV[i][ii][0][0][0][0] > ROBOT_MAX_RAD) {
+								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
 							}
-							else if (ROTV[i][ii][0][0][0][0] < -1 * robRadMax) {
-								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] - robRadMax * ts;
+							else if (ROTV[i][ii][0][0][0][0] < -1 * ROBOT_MAX_RAD) {
+								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
 							}
 							else {
-								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] + ROTV[i][0][0][0][0][0] * ts + ROTA[i][ii][0][0][0][0] * ts * ts / 2;
+								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] + ROTV[i][0][0][0][0][0] * TIMESTEP + ROTA[i][ii][0][0][0][0] * TIMESTEP * TIMESTEP / 2;
 							}
 							A[i][ii][0][0][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
-							V[i][ii][0][0][0][0] = V[i][0][0][0][0][0] + A[i][ii][0][0][0][0] * ts;
+							V[i][ii][0][0][0][0] = V[i][0][0][0][0][0] + A[i][ii][0][0][0][0] * TIMESTEP;
 							//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
-							if (V[i][ii][0][0][0][0] > robVMax) {
-								DIST[i][ii][0][0][0][0] = robVMax * ts;
+							if (V[i][ii][0][0][0][0] > ROBOT_MAX_VELOCITY) {
+								DIST[i][ii][0][0][0][0] = ROBOT_MAX_VELOCITY * TIMESTEP;
 							}
-							else if (V[i][ii][0][0][0][0] < -1 * robVMax) {
-								DIST[i][ii][0][0][0][0] = -1 * robVMax * ts;
+							else if (V[i][ii][0][0][0][0] < -1 * ROBOT_MAX_VELOCITY) {
+								DIST[i][ii][0][0][0][0] = -1 * ROBOT_MAX_VELOCITY * TIMESTEP;
 							}
 							else {
-								DIST[i][ii][0][0][0][0] = V[i][0][0][0][0][0] * ts + A[i][ii][0][0][0][0] * ts * ts / 2;
+								DIST[i][ii][0][0][0][0] = V[i][0][0][0][0][0] * TIMESTEP + A[i][ii][0][0][0][0] * TIMESTEP * TIMESTEP / 2;
 							}
 							X[i][ii][0][0][0][0] = X[i][0][0][0][0][0] + DIST[i][ii][0][0][0][0] * cos(ROT[i][ii][0][0][0][0]);
 							Y[i][ii][0][0][0][0] = Y[i][0][0][0][0][0] + DIST[i][ii][0][0][0][0] * sin(ROT[i][ii][0][0][0][0]);
@@ -417,6 +419,8 @@ int main() {
 							xP = X[i][ii][0][0][0][0];
 							yP = Y[i][ii][0][0][0][0];
 							xV = V[i][ii][0][0][0][0];
+							humanXP = humanX + 2 * humanV * TIMESTEP * cos(humanTheta);
+							humanYP = humanY + 2 * humanV * TIMESTEP * sin(humanTheta);
 							q[i][ii][0][0][0][0] = safety();
 
 							PP[i][ii][0][0][0][0] = P;
@@ -426,33 +430,33 @@ int main() {
 
 							if (q[i][ii][0][0][0][0] == 0 /*&& objDist > colliC*/) {
 								//printf("[%d][%d][0][0] is safe\n", i, ii);
-								for (int iii = 1; iii < N; ++iii) {
-									tp = 3 * ts;
+								for (int iii = 1; iii < EVERY_TIMESTEP_NUM; ++iii) {
+									tp = 1 * TIMESTEP;
 
 									ROTA[i][ii][iii][0][0][0] = ROTA[i][ii][0][0][0][0] + (double)rand() / 32767.0 * 2 * robPRotAcc - robPRotAcc;
-									ROTV[i][ii][iii][0][0][0] = ROTV[i][ii][0][0][0][0] + ROTA[i][ii][iii][0][0][0] * ts;
+									ROTV[i][ii][iii][0][0][0] = ROTV[i][ii][0][0][0][0] + ROTA[i][ii][iii][0][0][0] * TIMESTEP;
 
 									//ç≈ëÂäpë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂäpë¨ìxÇ…ä€ÇﬂÇÈ
-									if (ROTV[i][ii][iii][0][0][0] > robRadMax) {
-										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] + robRadMax * ts;
+									if (ROTV[i][ii][iii][0][0][0] > ROBOT_MAX_RAD) {
+										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
 									}
-									else if (ROTV[i][ii][iii][0][0][0] < -1 * robRadMax) {
-										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] - robRadMax * ts;
+									else if (ROTV[i][ii][iii][0][0][0] < -1 * ROBOT_MAX_RAD) {
+										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
 									}
 									else {
-										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] + ROTV[i][ii][0][0][0][0] * ts + ROTA[i][ii][iii][0][0][0] * ts * ts / 2;
+										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] + ROTV[i][ii][0][0][0][0] * TIMESTEP + ROTA[i][ii][iii][0][0][0] * TIMESTEP * TIMESTEP / 2;
 									}
 									A[i][ii][iii][0][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
-									V[i][ii][iii][0][0][0] = V[i][ii][0][0][0][0] + A[i][ii][iii][0][0][0] * ts;
+									V[i][ii][iii][0][0][0] = V[i][ii][0][0][0][0] + A[i][ii][iii][0][0][0] * TIMESTEP;
 									//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
-									if (V[i][ii][iii][0][0][0] > robVMax) {
-										DIST[i][ii][iii][0][0][0] = robVMax * ts;
+									if (V[i][ii][iii][0][0][0] > ROBOT_MAX_VELOCITY) {
+										DIST[i][ii][iii][0][0][0] = ROBOT_MAX_VELOCITY * TIMESTEP;
 									}
-									else if (V[i][ii][iii][0][0][0] < -1 * robVMax) {
-										DIST[i][ii][iii][0][0][0] = -1 * robVMax * ts;
+									else if (V[i][ii][iii][0][0][0] < -1 * ROBOT_MAX_VELOCITY) {
+										DIST[i][ii][iii][0][0][0] = -1 * ROBOT_MAX_VELOCITY * TIMESTEP;
 									}
 									else {
-										DIST[i][ii][iii][0][0][0] = V[i][ii][0][0][0][0] * ts + A[i][ii][iii][0][0][0] * ts * ts / 2;
+										DIST[i][ii][iii][0][0][0] = V[i][ii][0][0][0][0] * TIMESTEP + A[i][ii][iii][0][0][0] * TIMESTEP * TIMESTEP / 2;
 									}
 									X[i][ii][iii][0][0][0] = X[i][ii][0][0][0][0] + DIST[i][ii][iii][0][0][0] * cos(ROT[i][ii][iii][0][0][0]);
 									Y[i][ii][iii][0][0][0] = Y[i][ii][0][0][0][0] + DIST[i][ii][iii][0][0][0] * sin(ROT[i][ii][iii][0][0][0]);
@@ -462,6 +466,8 @@ int main() {
 									xP = X[i][ii][iii][0][0][0];
 									yP = Y[i][ii][iii][0][0][0];
 									xV = V[i][ii][iii][0][0][0];
+									humanXP = humanX + 3 * humanV * TIMESTEP * cos(humanTheta);
+									humanYP = humanY + 3 * humanV * TIMESTEP * sin(humanTheta);
 									q[i][ii][iii][0][0][0] = safety();
 
 									PP[i][ii][iii][0][0][0] = P;
@@ -471,33 +477,33 @@ int main() {
 
 									if (q[i][ii][iii][0][0][0] == 0 /*&& objDist > colliC*/) {
 										//printf("[%d][%d][%d][0] is safe\n", i, ii, iii);
-										for (int iv = 1; iv < N; ++iv) {
-											tp = 4 * ts;
+										for (int iv = 1; iv < EVERY_TIMESTEP_NUM; ++iv) {
+											tp = 1 * TIMESTEP;
 
 											ROTA[i][ii][iii][iv][0][0] = ROTA[i][ii][iii][0][0][0] + (double)rand() / 32767.0 * 2 * robPRotAcc - robPRotAcc;
-											ROTV[i][ii][iii][iv][0][0] = ROTV[i][ii][iii][0][0][0] + ROTA[i][ii][iii][iv][0][0] * ts;
+											ROTV[i][ii][iii][iv][0][0] = ROTV[i][ii][iii][0][0][0] + ROTA[i][ii][iii][iv][0][0] * TIMESTEP;
 
 											//ç≈ëÂäpë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂäpë¨ìxÇ…ä€ÇﬂÇÈ
-											if (ROTV[i][ii][iii][iv][0][0] > robRadMax) {
-												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] + robRadMax * ts;
+											if (ROTV[i][ii][iii][iv][0][0] > ROBOT_MAX_RAD) {
+												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
 											}
-											else if (ROTV[i][ii][iii][iv][0][0] < -1 * robRadMax) {
-												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] - robRadMax * ts;
+											else if (ROTV[i][ii][iii][iv][0][0] < -1 * ROBOT_MAX_RAD) {
+												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
 											}
 											else {
-												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] + ROTV[i][ii][iii][0][0][0] * ts + ROTA[i][ii][iii][iv][0][0] * ts * ts / 2;
+												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] + ROTV[i][ii][iii][0][0][0] * TIMESTEP + ROTA[i][ii][iii][iv][0][0] * TIMESTEP * TIMESTEP / 2;
 											}
 											A[i][ii][iii][iv][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
-											V[i][ii][iii][iv][0][0] = V[i][ii][iii][0][0][0] + A[i][ii][iii][iv][0][0] * ts;
+											V[i][ii][iii][iv][0][0] = V[i][ii][iii][0][0][0] + A[i][ii][iii][iv][0][0] * TIMESTEP;
 											//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
-											if (V[i][ii][iii][iv][0][0] > robVMax) {
-												DIST[i][ii][iii][iv][0][0] = robVMax * ts;
+											if (V[i][ii][iii][iv][0][0] > ROBOT_MAX_VELOCITY) {
+												DIST[i][ii][iii][iv][0][0] = ROBOT_MAX_VELOCITY * TIMESTEP;
 											}
-											else if (V[i][ii][iii][iv][0][0] < -1 * robVMax) {
-												DIST[i][ii][iii][iv][0][0] = -1 * robVMax * ts;
+											else if (V[i][ii][iii][iv][0][0] < -1 * ROBOT_MAX_VELOCITY) {
+												DIST[i][ii][iii][iv][0][0] = -1 * ROBOT_MAX_VELOCITY * TIMESTEP;
 											}
 											else {
-												DIST[i][ii][iii][iv][0][0] = V[i][ii][iii][0][0][0] * ts + A[i][ii][iii][iv][0][0] * ts * ts / 2;
+												DIST[i][ii][iii][iv][0][0] = V[i][ii][iii][0][0][0] * TIMESTEP + A[i][ii][iii][iv][0][0] * TIMESTEP * TIMESTEP / 2;
 											}
 											X[i][ii][iii][iv][0][0] = X[i][ii][iii][0][0][0] + DIST[i][ii][iii][iv][0][0] * cos(ROT[i][ii][iii][iv][0][0]);
 											Y[i][ii][iii][iv][0][0] = Y[i][ii][iii][0][0][0] + DIST[i][ii][iii][iv][0][0] * sin(ROT[i][ii][iii][iv][0][0]);
@@ -507,6 +513,8 @@ int main() {
 											xP = X[i][ii][iii][iv][0][0];
 											yP = Y[i][ii][iii][iv][0][0];
 											xV = V[i][ii][iii][iv][0][0];
+											humanXP = humanX + 4 * humanV * TIMESTEP * cos(humanTheta);
+											humanYP = humanY + 4 * humanV * TIMESTEP * sin(humanTheta);
 											q[i][ii][iii][iv][0][0] = safety();
 
 											PP[i][ii][iii][iv][0][0] = P;
@@ -516,33 +524,33 @@ int main() {
 
 											if (q[i][ii][iii][iv][0][0] == 0 /*&& objDist > colliC*/) {
 												//printf("[%d][%d][%d][%d] is safe\n", i, ii, iii, iv);
-												for (int v = 1; v < N + 1; ++v) {
-													tp = 5 * ts;
+												for (int v = 1; v < EVERY_TIMESTEP_NUM; ++v) {
+													tp = 1 * TIMESTEP;
 
 													ROTA[i][ii][iii][iv][v][0] = ROTA[i][ii][iii][iv][0][0] + (double)rand() / 32767.0 * 2 * robPRotAcc - robPRotAcc;
-													ROTV[i][ii][iii][iv][v][0] = ROTV[i][ii][iii][iv][0][0] + ROTA[i][ii][iii][iv][v][0] * ts;
+													ROTV[i][ii][iii][iv][v][0] = ROTV[i][ii][iii][iv][0][0] + ROTA[i][ii][iii][iv][v][0] * TIMESTEP;
 
 													//ç≈ëÂäpë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂäpë¨ìxÇ…ä€ÇﬂÇÈ
-													if (ROTV[i][ii][iii][iv][v][0] > robRadMax) {
-														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] + robRadMax * ts;
+													if (ROTV[i][ii][iii][iv][v][0] > ROBOT_MAX_RAD) {
+														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] + ROBOT_MAX_RAD * TIMESTEP;
 													}
-													else if (ROTV[i][ii][iii][iv][v][0] < -1 * robRadMax) {
-														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] - robRadMax * ts;
+													else if (ROTV[i][ii][iii][iv][v][0] < -1 * ROBOT_MAX_RAD) {
+														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] - ROBOT_MAX_RAD * TIMESTEP;
 													}
 													else {
-														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] + ROTV[i][ii][iii][iv][0][0] * ts + ROTA[i][ii][iii][iv][v][0] * ts * ts / 2;
+														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] + ROTV[i][ii][iii][iv][0][0] * TIMESTEP + ROTA[i][ii][iii][iv][v][0] * TIMESTEP * TIMESTEP / 2;
 													}
 													A[i][ii][iii][iv][v][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
-													V[i][ii][iii][iv][v][0] = V[i][ii][iii][iv][0][0] + A[i][ii][iii][iv][v][0] * ts;
+													V[i][ii][iii][iv][v][0] = V[i][ii][iii][iv][0][0] + A[i][ii][iii][iv][v][0] * TIMESTEP;
 													//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
-													if (V[i][ii][iii][iv][v][0] > robVMax) {
-														DIST[i][ii][iii][iv][v][0] = robVMax * ts;
+													if (V[i][ii][iii][iv][v][0] > ROBOT_MAX_VELOCITY) {
+														DIST[i][ii][iii][iv][v][0] = ROBOT_MAX_VELOCITY * TIMESTEP;
 													}
-													else if (V[i][ii][iii][iv][v][0] < -1 * robVMax) {
-														DIST[i][ii][iii][iv][v][0] = -1 * robVMax * ts;
+													else if (V[i][ii][iii][iv][v][0] < -1 * ROBOT_MAX_VELOCITY) {
+														DIST[i][ii][iii][iv][v][0] = -1 * ROBOT_MAX_VELOCITY * TIMESTEP;
 													}
 													else {
-														DIST[i][ii][iii][iv][v][0] = V[i][ii][iii][iv][0][0] * ts + A[i][ii][iii][iv][v][0] * ts * ts / 2;
+														DIST[i][ii][iii][iv][v][0] = V[i][ii][iii][iv][0][0] * TIMESTEP + A[i][ii][iii][iv][v][0] * TIMESTEP * TIMESTEP / 2;
 													}
 													X[i][ii][iii][iv][v][0] = X[i][ii][iii][iv][0][0] + DIST[i][ii][iii][iv][v][0] * cos(ROT[i][ii][iii][iv][v][0]);
 													Y[i][ii][iii][iv][v][0] = Y[i][ii][iii][iv][0][0] + DIST[i][ii][iii][iv][v][0] * sin(ROT[i][ii][iii][iv][v][0]);
@@ -552,6 +560,8 @@ int main() {
 													xP = X[i][ii][iii][iv][v][0];
 													yP = Y[i][ii][iii][iv][v][0];
 													xV = V[i][ii][iii][iv][v][0];
+													humanXP = humanX + 5 * humanV * TIMESTEP * cos(humanTheta);
+													humanYP = humanY + 5 * humanV * TIMESTEP * sin(humanTheta);
 													q[i][ii][iii][iv][v][0] = safety();
 
 													PP[i][ii][iii][iv][v][0] = P;
@@ -561,33 +571,33 @@ int main() {
 
 													if (q[i][ii][iii][iv][v][0] == 0 /*&& objDist > colliC*/) {
 														//printf("[%d][%d][%d][%d][%d] is safe\n", i, ii, iii, iv, v);
-														for (int vi = 1; vi < N + 1; ++vi) {
-															tp = 6 * ts;
+														for (int vi = 1; vi < EVERY_TIMESTEP_NUM; ++vi) {
+															tp = 1 * TIMESTEP;
 
 															ROTA[i][ii][iii][iv][v][vi] = ROTA[i][ii][iii][iv][v][0] + (double)rand() / 32767.0 * 2 * robPRotAcc - robPRotAcc;
-															ROTV[i][ii][iii][iv][v][vi] = ROTV[i][ii][iii][iv][v][0] + ROTA[i][ii][iii][iv][v][vi] * ts;
+															ROTV[i][ii][iii][iv][v][vi] = ROTV[i][ii][iii][iv][v][0] + ROTA[i][ii][iii][iv][v][vi] * TIMESTEP;
 
 															//ç≈ëÂäpë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂäpë¨ìxÇ…ä€ÇﬂÇÈ
-															if (ROTV[i][ii][iii][iv][v][vi] > robRadMax) {
-																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] + robRadMax * ts;
+															if (ROTV[i][ii][iii][iv][v][vi] > ROBOT_MAX_RAD) {
+																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] + ROBOT_MAX_RAD * TIMESTEP;
 															}
-															else if (ROTV[i][ii][iii][iv][v][vi] < -1 * robRadMax) {
-																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] - robRadMax * ts;
+															else if (ROTV[i][ii][iii][iv][v][vi] < -1 * ROBOT_MAX_RAD) {
+																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] - ROBOT_MAX_RAD * TIMESTEP;
 															}
 															else {
-																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] + ROTV[i][ii][iii][iv][v][0] * ts + ROTA[i][ii][iii][iv][v][vi] * ts * ts / 2;
+																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] + ROTV[i][ii][iii][iv][v][0] * TIMESTEP + ROTA[i][ii][iii][iv][v][vi] * TIMESTEP * TIMESTEP / 2;
 															}
 															A[i][ii][iii][iv][v][vi] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
-															V[i][ii][iii][iv][v][vi] = V[i][ii][iii][iv][v][0] + A[i][ii][iii][iv][v][vi] * ts;
+															V[i][ii][iii][iv][v][vi] = V[i][ii][iii][iv][v][0] + A[i][ii][iii][iv][v][vi] * TIMESTEP;
 															//ç≈ëÂë¨ìxÇí¥âﬂÇµÇΩèÍçáÅCç≈ëÂë¨ìxÇ…ä€ÇﬂÇÈ
-															if (V[i][ii][iii][iv][v][vi] > robVMax) {
-																DIST[i][ii][iii][iv][v][vi] = robVMax * ts;
+															if (V[i][ii][iii][iv][v][vi] > ROBOT_MAX_VELOCITY) {
+																DIST[i][ii][iii][iv][v][vi] = ROBOT_MAX_VELOCITY * TIMESTEP;
 															}
-															else if (V[i][ii][iii][iv][v][vi] < -1 * robVMax) {
-																DIST[i][ii][iii][iv][v][vi] = -1 * robVMax * ts;
+															else if (V[i][ii][iii][iv][v][vi] < -1 * ROBOT_MAX_VELOCITY) {
+																DIST[i][ii][iii][iv][v][vi] = -1 * ROBOT_MAX_VELOCITY * TIMESTEP;
 															}
 															else {
-																DIST[i][ii][iii][iv][v][vi] = V[i][ii][iii][iv][v][0] * ts + A[i][ii][iii][iv][v][vi] * ts * ts / 2;
+																DIST[i][ii][iii][iv][v][vi] = V[i][ii][iii][iv][v][0] * TIMESTEP + A[i][ii][iii][iv][v][vi] * TIMESTEP * TIMESTEP / 2;
 															}
 															X[i][ii][iii][iv][v][vi] = X[i][ii][iii][iv][v][0] + DIST[i][ii][iii][iv][v][vi] * cos(ROT[i][ii][iii][iv][v][vi]);
 															Y[i][ii][iii][iv][v][vi] = Y[i][ii][iii][iv][v][0] + DIST[i][ii][iii][iv][v][vi] * sin(ROT[i][ii][iii][iv][v][vi]);
@@ -597,6 +607,8 @@ int main() {
 															xP = X[i][ii][iii][iv][v][vi];
 															yP = Y[i][ii][iii][iv][v][vi];
 															xV = V[i][ii][iii][iv][v][vi];
+															humanXP = humanX + 6 * humanV * TIMESTEP * cos(humanTheta);
+															humanYP = humanY + 6 * humanV * TIMESTEP * sin(humanTheta);
 															q[i][ii][iii][iv][v][vi] = safety();
 
 															PP[i][ii][iii][iv][v][vi] = P;
@@ -637,23 +649,20 @@ int main() {
 						GD[i][0][0][0][0][0] = INFINITY;
 					}
 				}
-				tp = ts;
+				tp = TIMESTEP;
 
 				/*
-				for (int i = 0; i < N; ++i) {
+				for (int i = 0; i < EVERY_TIMESTEP_NUM; ++i) {
 				printf("GD[%d][][] = %0.10lf\n", i, GD[i]);
 				}
-
-				for (int i = 0; i < N; ++i) {
+				for (int i = 0; i < EVERY_TIMESTEP_NUM; ++i) {
 				printf("X[%d] = %0.10lf\n", i, X[i]);
 				printf("Y[%d] = %0.10lf\n", i, Y[i]);
 				}
-
-				for (int i = 0; i < N; ++i) {
+				for (int i = 0; i < EVERY_TIMESTEP_NUM; ++i) {
 				printf("V[%d] = %0.10lf\n", i, V[i]);
 				}
-
-				for (int i = 0; i < N; ++i) {
+				for (int i = 0; i < EVERY_TIMESTEP_NUM; ++i) {
 				printf("DIST[%d] = %0.10lf\n", i, DIST[i]);
 				}
 				*/
@@ -666,13 +675,13 @@ int main() {
 				minGD = GD[0][0][0][0][0][0];
 				//printf("G = %p\n", GD[0]);
 				G = 0;
-				for (int t1 = 1; t1 < N; ++t1) {
-					for (int t2 = 0; t2 < N; ++t2) {
-						for (int t3 = 0; t3 < N; ++t3) {
-							for (int t4 = 0; t4 < N; ++t4) {
-								for (int t5 = 0; t5 < N + 1; ++t5) {
-									for (int t6 = 0; t6 < N + 1; ++t6) {
-										for (int t7 = 0; t7 < N + 1; ++t7) {
+				for (int t1 = 1; t1 < EVERY_TIMESTEP_NUM; ++t1) {
+					for (int t2 = 0; t2 < EVERY_TIMESTEP_NUM; ++t2) {
+						for (int t3 = 0; t3 < EVERY_TIMESTEP_NUM; ++t3) {
+							for (int t4 = 0; t4 < EVERY_TIMESTEP_NUM; ++t4) {
+								for (int t5 = 0; t5 < EVERY_TIMESTEP_NUM; ++t5) {
+									for (int t6 = 0; t6 < EVERY_TIMESTEP_NUM; ++t6) {
+										for (int t7 = 0; t7 < EVERY_TIMESTEP_NUM; ++t7) {
 											if (GD[t1][t2][t3][t4][t5][t6] != 0) {
 												if (minGD > GD[t1][t2][t3][t4][t5][t6]) {
 													minGD = GD[t1][t2][t3][t4][t5][t6];
@@ -696,7 +705,7 @@ int main() {
 
 				if (p == 0) {
 					//à¿ëSÇ»åoòHÇ™ë∂ç›ÇµÇ»Ç¢ÇÃÇ≈í‚é~Ç∑ÇÈ
-					printf("safe route is not detected! route replaning...\n");
+					//printf("safe route is not detected! route replaning...\n");
 
 					/*
 					w = robX;
@@ -706,16 +715,15 @@ int main() {
 					objDist = sqrt(pow(humanX - robX, 2) + pow(humanY - robY, 2));
 					nowR = R;
 					string p2string(std::to_string(P));
-
 					fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
 					//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
 					*/
 					st = 0;
-					printf("stop=%d\n", st);
+					//printf("stop=%d\n", st);
 				}
 				else {
 					//à¿ëSÇ»åoòHÇÃàÍï‡ñ⁄Çà⁄ìÆ
-					printf("selected route is %d\n", p);
+					//printf("selected route is %d\n", p);
 					robX = X[p][0][0][0][0][0];
 					robY = Y[p][0][0][0][0][0];
 					robRot = ROT[p][0][0][0][0][0];
@@ -727,6 +735,8 @@ int main() {
 					xP = robX;
 					yP = robY;
 					xV = robV;
+					humanXP = humanX;
+					humanYP = humanY;
 
 					safety();
 
@@ -750,13 +760,13 @@ int main() {
 					}
 				}
 
-				for (int t1 = 1; t1 < N; ++t1) {
-					for (int t2 = 0; t2 < N; ++t2) {
-						for (int t3 = 0; t3 < N; ++t3) {
-							for (int t4 = 0; t4 < N; ++t4) {
-								for (int t5 = 0; t5 < N + 1; ++t5) {
-									for (int t6 = 0; t6 < N + 1; ++t6) {
-										for (int t7 = 0; t7 < N + 1; ++t7) {
+				for (int t1 = 1; t1 < EVERY_TIMESTEP_NUM; ++t1) {
+					for (int t2 = 0; t2 < EVERY_TIMESTEP_NUM; ++t2) {
+						for (int t3 = 0; t3 < EVERY_TIMESTEP_NUM; ++t3) {
+							for (int t4 = 0; t4 < EVERY_TIMESTEP_NUM; ++t4) {
+								for (int t5 = 0; t5 < EVERY_TIMESTEP_NUM; ++t5) {
+									for (int t6 = 0; t6 < EVERY_TIMESTEP_NUM; ++t6) {
+										for (int t7 = 0; t7 < EVERY_TIMESTEP_NUM; ++t7) {
 											//îzóÒÇÃèâä˙âª
 											X[t1][t2][t3][t4][t5][t6] = 0.0;
 											Y[t1][t2][t3][t4][t5][t6] = 0.0;
@@ -796,7 +806,7 @@ int main() {
 
 
 
-	printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
+	//printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
 	fclose(fp);
 
 	//à⁄ìÆèàóùÇ™èIóπÇµÇΩÇ±Ç∆ÇÃçáê}
@@ -812,39 +822,39 @@ int safety() {
 	double relVX = 0.0, relVY = 0.0, rV = 0.0;
 	double robRotH = 0.0;		//ÉçÉ{ÉbÉgÇ©ÇÁå©ÇΩêlä‘ÇÃï˚å¸[rad]
 
-	robRotH = atan2(humanY - robY, humanX - robX);
+	robRotH = atan2(humanYP - robY, humanXP - robX);
 
 	//ó\ë™ñ⁄ïWÇÃéZèo
 	xP = xP + colliC * cos(robRotH);
 	yP = yP + colliC * sin(robRotH);
 
-	humanVP = sqrt(pow(xP - humanX, 2) + pow(yP - humanY, 2)) / tp;
+	humanVP = sqrt(pow(xP - humanXP, 2) + pow(yP - humanYP, 2)) / tp;
 	//printf("humanVP=%0.10lf\n", humanVP);
 
-	if (humanVP > humanVMax) {
+	if (humanVP > HUMAN_MAX_VELOCITY) {
 		P = 0;						//êlä‘Ç™à⁄ìÆÇ≈Ç´ÇÈë¨ìxÇí¥Ç¶ÇƒÇ¢ÇÈÇÃÇ≈êlä‘ÇÃë∂ç›ämó¶ÇÕ0
 									//printf("P=%0.10lf\n", P);
 	}
 	else {
-		humanThetaP = atan2(yP - humanY, xP - humanX) - humanTheta;
+		humanThetaP = atan2(yP - humanYP, xP - humanXP) - humanTheta;
 		//printf("humanThetaP=%0.10lf\n", humanThetaP);
 
-		robThetaP = atan2(humanY - yP, humanX - xP);
+		robThetaP = atan2(humanYP - yP, humanXP - xP);
 
-		sigTheta = (1.35 * PI) / (8 * (humanV + 0.00001));
-		//printf("sigTheta=%0.10lf\n", sigTheta);
+		SIGMA_THETA = (1.35 * PI) / (8 * (humanV + 0.00001));
+		//printf("SIGMA_THETA=%0.10lf\n", SIGMA_THETA);
 
 
-		VV = (humanVP - miuV) / sigV / 1;
+		VV = (humanVP - miuV) / SIGMA_VELOCITY / 1;
 		//printf("VV=%0.10lf\n", VV);
 
-		VO = humanThetaP / sigTheta * 2;
+		VO = humanThetaP / SIGMA_THETA * 1;
 		//printf("VO=%0.10lf\n", VO);
 
 		A = exp((pow(VV, 2) + pow(VO, 2)) / -2);
 		//printf("A=%0.10lf\n", A);
 
-		B = 2 * PI * sigV * sigTheta;
+		B = 2 * PI * SIGMA_VELOCITY * SIGMA_THETA;
 		//printf("B=%0.10lf\n", B);
 
 		P = A / B;
@@ -863,14 +873,14 @@ int safety() {
 	/*
 	//êlä‘Ç∆ÉçÉ{ÉbÉgÇÃêiòHÇ™åÇÌÇÁÇ»Ç¢èÍçáÅCëäëŒë¨ìxÇ™ë∂ç›ÇµÇ»Ç¢Ç‡ÇÃÇ∆Ç∑ÇÈ
 	if (relVX < 0 || relVY < 0) {
-		rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
+	rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
 	}
 	else {
-		rV = 0.0;
+	rV = 0.0;
 	}
 	*/
 	rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
-	S = humanW * robW * pow(rV, 2) / (humanW + robW) / 2;
+	S = HUMAN_WEIGHT * ROBOT_WEIGHT * pow(rV, 2) / (HUMAN_WEIGHT + ROBOT_WEIGHT) / 2;
 	//printf("S=%0.10lf	", S);
 
 	//è’ìÀÉäÉXÉNÇÃåvéZ
@@ -878,7 +888,7 @@ int safety() {
 	//printf("risk num=%0.10lf\n", R);
 
 	//à¿ëSê´ÇÃîªíË
-	if (R > 0.00000011 * nts) {
+	if (R > 0.00000011 * TIMESTEP_NUM) {
 		return 1;
 	}
 	else {
@@ -895,42 +905,42 @@ int routing() {
 	double relVX = 0.0, relVY = 0.0, rV = 0.0;
 	double robRotH = 0.0;
 
-	robRotH = atan2(humanY - robY, humanX - robX);
+	robRotH = atan2(humanYP - robY, humanXP - robX);
 
 	xP = xP + colliC * cos(robRotH);
 	yP = yP + colliC * sin(robRotH);
 
-	humanVP = sqrt(pow(xP - humanX, 2) + pow(yP - humanY, 2)) / tp;
+	humanVP = sqrt(pow(xP - humanXP, 2) + pow(yP - humanYP, 2)) / tp;
 	//printf("humanVP=%0.10lf\n", humanVP);
 
-	if (humanVP > humanVMax) {
+	if (humanVP > HUMAN_MAX_VELOCITY) {
 		P = 0;						//êlä‘Ç™à⁄ìÆÇ≈Ç´ÇÈë¨ìxÇí¥Ç¶ÇƒÇ¢ÇÈÇÃÇ≈êlä‘ÇÃë∂ç›ämó¶ÇÕ0
-		printf("P=%0.10lf\n", P);
+		//printf("P=%0.10lf\n", P);
 	}
 	else {
-		humanThetaP = atan2(yP - humanY, xP - humanX) - humanTheta;
+		humanThetaP = atan2(yP - humanYP, xP - humanXP) - humanTheta;
 		//printf("humanThetaP=%0.10lf\n", humanThetaP);
 
-		robThetaP = atan2(humanY - yP, humanX - xP);
+		robThetaP = atan2(humanYP - yP, humanXP - xP);
 
-		sigTheta = (1.35 * PI) / (8 * (humanV + 0.00001));
-		//printf("sigTheta=%0.10lf\n", sigTheta);
+		SIGMA_THETA = (1.35 * PI) / (8 * (humanV + 0.00001));
+		//printf("SIGMA_THETA=%0.10lf\n", SIGMA_THETA);
 
 
-		VV = (humanVP - miuV) / sigV / 1;
+		VV = (humanVP - miuV) / SIGMA_VELOCITY / 1;
 		//printf("VV=%0.10lf\n", VV);
 
-		VO = humanThetaP / sigTheta * 2;
+		VO = humanThetaP / SIGMA_THETA * 1;
 		//printf("VO=%0.10lf\n", VO);
 
 		A = exp((pow(VV, 2) + pow(VO, 2)) / -2);
 		//printf("A=%0.10lf\n", A);
 
-		B = 2 * PI * sigV * sigTheta;
+		B = 2 * PI * SIGMA_VELOCITY * SIGMA_THETA;
 		//printf("B=%0.10lf\n", B);
 
 		P = A / B;
-		printf("P=%0.10lf\n", P);
+		//printf("P=%0.10lf\n", P);
 	}
 
 
@@ -941,9 +951,8 @@ int routing() {
 	relVX = robVX * cos(robThetaP) - humanVP * cos(humanThetaP);
 	relVY = robVY * sin(robThetaP) - humanVP * sin(humanThetaP);
 	rV = sqrt(pow(relVX, 2) + pow(relVY, 2));
-	S = humanW * robW * pow(rV, 2) / (humanW + robW) / 2;
+	S = HUMAN_WEIGHT * ROBOT_WEIGHT * pow(rV, 2) / (HUMAN_WEIGHT + ROBOT_WEIGHT) / 2;
 	//printf("S=%0.10lf\n", S);
-
 	//è’ìÀÉäÉXÉNÇÃåvéZ
 	R = P * S;
 	//printf("risk num=%0.10lf\n", R);
@@ -960,31 +969,31 @@ int routing() {
 
 int humanMoving() {
 	//êlä‘ÇÃÉ^ÉCÉÄÉXÉeÉbÉvñàÇÃà⁄ìÆÇèàóù
-	//humanX = humanX + humanV * ts * cos((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
-	//humanY = humanY + humanV * ts * sin((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
-	//humanX = humanX - humanV * ts;
-	//humanY = humanY - humanV * ts;
-	humanX = humanX + humanV * ts * cos(humanTheta);
-	humanY = humanY + humanV * ts * sin(humanTheta);
+	//humanX = humanX + humanV * TIMESTEP * cos((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
+	//humanY = humanY + humanV * TIMESTEP * sin((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
+	//humanX = humanX - humanV * TIMESTEP;
+	//humanY = humanY - humanV * TIMESTEP;
+	humanX = humanX + humanV * TIMESTEP * cos(humanTheta);
+	humanY = humanY + humanV * TIMESTEP * sin(humanTheta);
 
 	/*//ï˚å¸ì]ä∑45Åã
 	if (humanX > 2.5) {
-	humanX = humanX - humanV * ts;
+	humanX = humanX - humanV * TIMESTEP;
 	}
 	else {
 	humanTheta = PI * 1 / 4;
-	humanX = humanX + humanV * ts;
-	humanY = humanY + humanV * ts;
+	humanX = humanX + humanV * TIMESTEP;
+	humanY = humanY + humanV * TIMESTEP;
 	}*/
 
 	/*//ï˚å¸ì]ä∑180Åã
 	if (frag == 1) {
 	humanTheta = PI * 0 / 4;
-	humanX = humanX + humanV * ts;
-	//humanY = humanY - humanV * ts;
+	humanX = humanX + humanV * TIMESTEP;
+	//humanY = humanY - humanV * TIMESTEP;
 	}
 	else if (humanX > 2.5) {
-	humanX = humanX - humanV * ts;
+	humanX = humanX - humanV * TIMESTEP;
 	}
 	else {
 	frag = 1;
