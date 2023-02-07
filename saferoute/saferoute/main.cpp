@@ -22,7 +22,7 @@ double xV = 0.0;					//ロボットの予測速度[m/s]
 double colliC = 0;				//人間とロボットの接触距離[m]
 
 								//double humanV = 1.4 / 2;	        //人間の移動速度[m/s]
-double humanV = 0.9;								//double humanV = 1.4;
+double humanV = 0.7;								//double humanV = 1.4;
 
 double humanVP = 0.0;			        //人間の移動ノルム
 
@@ -54,6 +54,7 @@ double robRotV = 0.0;			//ロボットの現在角速度[rad/s]
 double robDist = 0.0;			//ロボットが進む距離[m]
 int pN;					        //一つのパーティクルから伸びる枝の数
 
+double humanGD = 0.0;				//現在の人間と人間の目的位置の距離[m]
 double gD = 0.0;				        //現在のロボットと目標位置の距離[m]
 double objDist = 0.0;			        //人間とロボットの距離[m]
 double nowR = 0.0;						//現在の衝突リスク値
@@ -68,7 +69,7 @@ double GD[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIME
 double RISKP[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				//各回避軌道経由点候補の衝突リスク値
 double RISKT[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				//各回避軌道候補の積分リスク値
 double PP[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];					//各回避軌道経由点候補における人間の存在確率
-												//int prev_p[EVERY_TIMESTEP_NUM];			        //N番目のパーティクルと接続する前のパーティクル番号
+																																					//int prev_p[EVERY_TIMESTEP_NUM];			        //N番目のパーティクルと接続する前のパーティクル番号
 
 double robXP = 0.0, robYP = 0.0;	//最短移動する際の次のロボットの予測位置[m/s]
 double robRotP = 0.0;				//最短移動する際の次のロボットの予測角度[rad]
@@ -105,9 +106,9 @@ int main() {
 	robRotMax = ROBOT_MAX_RAD * TIMESTEP;
 
 	//人間の現在位置を測定
-	humanX = 4.0;
-	humanY = 2.0;
-	humanTheta = PI * 4 / 4;
+	humanX = 1.5;
+	humanY = 4.0;
+	humanTheta = PI * -1 / 2;
 	miuV = humanV;
 
 	colliC = HUMAN_RADIUS + ROBOT_RADIUS;
@@ -147,7 +148,7 @@ int main() {
 	//printf("human pos=(%0.10lf,%0.10lf)\n", humanX, humanY);
 
 	//ロボットが目的位置に到達していない場合，移動を継続する
-	while (robX != GOAL_X || robY != GOAL_Y )
+	while (robX != GOAL_X || robY != GOAL_Y)
 	{
 		//printf("robot start moving\n");
 
@@ -161,6 +162,12 @@ int main() {
 				robRotV = robRotV - robPRotAcc * TIMESTEP;
 				if (robRotV > 0) {
 					robRot = robRot + robRotV * TIMESTEP - robPRotAcc * TIMESTEP * TIMESTEP / 2;
+					if (robRot > PI) {
+						robRot = robRot - 2 * PI;
+					}
+					else if (robRot < -1 * PI) {
+						robRot = robRot + 2 * PI;
+					}
 				}
 				else {
 					robRotV = 0;
@@ -170,6 +177,12 @@ int main() {
 				robRotV = robRotV + robPRotAcc * TIMESTEP;
 				if (robRotV < 0) {
 					robRot = robRot + robRotV * TIMESTEP + robPRotAcc * TIMESTEP * TIMESTEP / 2;
+					if (robRot > PI) {
+						robRot = robRot - 2 * PI;
+					}
+					else if (robRot < -1 * PI) {
+						robRot = robRot + 2 * PI;
+					}
 				}
 				else {
 					robRotV = 0;
@@ -184,6 +197,7 @@ int main() {
 				}
 				else {
 					robV = 0;
+					robDist = 0;
 				}
 			}
 			else if (robV < 0) {
@@ -193,22 +207,36 @@ int main() {
 				}
 				else {
 					robV = 0;
+					robDist = 0;
 				}
 			}
 
 			robX = robX + robDist * cos(robRot);
 			robY = robY + robDist * sin(robRot);
 
+			if (robX > AREA_X) {
+				robX = AREA_X;
+			}
+			else if (robX < 0) {
+				robX = 0;
+			}
+			if (robY > AREA_Y) {
+				robY = AREA_Y;
+			}
+			else if (robY < 0) {
+				robY = 0;
+			}
+
 			xP = robX;
 			yP = robY;
 			xV = robV;
-			humanXP = humanX;
-			humanYP = humanY;
+			humanXP = humanX + humanV * 1 * TIMESTEP * cos(humanTheta);
+			humanYP = humanY + humanV * 1 * TIMESTEP * sin(humanTheta);
 			safe = safety();
 
 			humanMoving();
 
-			safety();
+			//safety();
 
 			w = robX;
 			x = robY;
@@ -217,7 +245,7 @@ int main() {
 			objDist = sqrt(pow(humanX - robX, 2) + pow(humanY - robY, 2));
 			nowR = R;
 
-
+			printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
 			//string p2string(std::to_string(P));
 
@@ -236,16 +264,30 @@ int main() {
 		else {
 			//objDist = sqrt(pow(humanX - robX, 2) + pow(humanY - robY, 2));
 			tp = 1;
-			robRotP = atan2(GOAL_Y  - robY, GOAL_X - robX);
+			robRotP = atan2(GOAL_Y - robY, GOAL_X - robX);
+
 			robRotC = robRotP - robRot;
 			if (robRotC > robRotMax) {
 				robRotP = robRot + robRotMax;
+				if (robRotP > PI) {
+					robRotP = robRotP - 2 * PI;
+				}
+				else if (robRotP < -1 * PI) {
+					robRotP = robRotP + 2 * PI;
+				}
 			}
 			else if (robRotC < -1 * robRotMax) {
 				robRotP = robRot - robRotMax;
+				if (robRotP > PI) {
+					robRotP = robRotP - 2 * PI;
+				}
+				else if (robRotP < -1 * PI) {
+					robRotP = robRotP + 2 * PI;
+				}
 			}
-			robXP = robX + ROBOT_MAX_VELOCITY * 2 * TIMESTEP * cos(robRotP);
-			robYP = robY + ROBOT_MAX_VELOCITY * 2 * TIMESTEP * sin(robRotP);
+
+			robXP = robX + ROBOT_MAX_VELOCITY * 1 * TIMESTEP * cos(robRotP);
+			robYP = robY + ROBOT_MAX_VELOCITY * 1 * TIMESTEP * sin(robRotP);
 			xP = robXP;
 			yP = robYP;
 			xV = ROBOT_MAX_VELOCITY;
@@ -257,36 +299,61 @@ int main() {
 				//ロボットが人間から十分に離れている場合，目標位置に直進
 				//printf("robot moving straight\n");
 				//robRot = atan((GOAL_Y  - robY) / (GOAL_X - robX));
-				robRotP = atan2(GOAL_Y  - robY, GOAL_X - robX);
+				robRotP = atan2(GOAL_Y - robY, GOAL_X - robX);
 				robRotC = robRotP - robRotP;
 				//単位タイムステップにおける最大旋回角度を超過した場合，最大旋回角度に丸める
 				if (robRotC > robRotMax) {
 					robRot = robRot + robRotMax;
+					if (robRot > PI) {
+						robRot = robRot - 2 * PI;
+					}
+					else if (robRot < -1 * PI) {
+						robRot = robRot + 2 * PI;
+					}
 				}
 				else if (robRotC < -1 * robRotMax) {
 					robRot = robRot - robRotMax;
+					if (robRot > PI) {
+						robRot = robRot - 2 * PI;
+					}
+					else if (robRot < -1 * PI) {
+						robRot = robRot + 2 * PI;
+					}
 				}
 				else {
 					robRot = robRotP;
 				}
 				robX = robX + ROBOT_MAX_VELOCITY * TIMESTEP * cos(robRot);
 				robY = robY + ROBOT_MAX_VELOCITY * TIMESTEP * sin(robRot);
+				if (robX > AREA_X) {
+					robX = AREA_X;
+				}
+				else if (robX < 0) {
+					robX = 0;
+				}
+				if (robY > AREA_Y) {
+					robY = AREA_Y;
+				}
+				else if (robY < 0) {
+					robY = 0;
+				}
+
 				robV = ROBOT_MAX_VELOCITY;
-				gD = sqrt(pow(GOAL_X - robX, 2) + pow(GOAL_Y  - robY, 2));
+				gD = sqrt(pow(GOAL_X - robX, 2) + pow(GOAL_Y - robY, 2));
 				printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
-
+				tp = 0.5;
 
 				xP = robXP;
 				yP = robYP;
 				xV = robV;
-				humanXP = humanX;
-				humanYP = humanY;
+				humanXP = humanX + humanV * 1 * TIMESTEP * cos(humanTheta);
+				humanYP = humanY + humanV * 1 * TIMESTEP * sin(humanTheta);
 				safety();
 
 				humanMoving();
 
-				safety();
+				//safety();
 
 				w = robX;
 				x = robY;
@@ -327,7 +394,7 @@ int main() {
 				A[0][0][0][0][0][0] = 0;
 				ROTA[0][0][0][0][0][0] = 0;
 
-				GD[0][0][0][0][0][0] = sqrt(pow(GOAL_X - X[0][0][0][0][0][0], 2) + pow(GOAL_Y  - Y[0][0][0][0][0][0], 2));
+				GD[0][0][0][0][0][0] = sqrt(pow(GOAL_X - X[0][0][0][0][0][0], 2) + pow(GOAL_Y - Y[0][0][0][0][0][0], 2));
 
 				//各回避軌道経由点をランダムな位置に生成し，安全性を確認する
 				for (int i = 1; i < EVERY_TIMESTEP_NUM; i++) {
@@ -339,12 +406,30 @@ int main() {
 					//最大角速度を超過した場合，最大角速度に丸める
 					if (ROTV[i][0][0][0][0][0] > ROBOT_MAX_RAD) {
 						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
+						if (ROT[i][0][0][0][0][0] > PI) {
+							ROT[i][0][0][0][0][0] = ROT[i][0][0][0][0][0] - 2 * PI;
+						}
+						else if (ROT[i][0][0][0][0][0] < -1 * PI) {
+							ROT[i][0][0][0][0][0] = ROT[i][0][0][0][0][0] + 2 * PI;
+						}
 					}
 					else if (ROTV[i][0][0][0][0][0] < -1 * ROBOT_MAX_RAD) {
 						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
+						if (ROT[i][0][0][0][0][0] > PI) {
+							ROT[i][0][0][0][0][0] = ROT[i][0][0][0][0][0] - 2 * PI;
+						}
+						else if (ROT[i][0][0][0][0][0] < -1 * PI) {
+							ROT[i][0][0][0][0][0] = ROT[i][0][0][0][0][0] + 2 * PI;
+						}
 					}
 					else {
 						ROT[i][0][0][0][0][0] = ROT[0][0][0][0][0][0] + ROTV[0][0][0][0][0][0] * TIMESTEP + ROTA[i][0][0][0][0][0] * TIMESTEP * TIMESTEP / 2;
+						if (ROT[i][0][0][0][0][0] > PI) {
+							ROT[i][0][0][0][0][0] = ROT[i][0][0][0][0][0] - 2 * PI;
+						}
+						else if (ROT[i][0][0][0][0][0] < -1 * PI) {
+							ROT[i][0][0][0][0][0] = ROT[i][0][0][0][0][0] + 2 * PI;
+						}
 					}
 					A[i][0][0][0][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
 					V[i][0][0][0][0][0] = V[0][0][0][0][0][0] + A[i][0][0][0][0][0] * TIMESTEP;
@@ -360,14 +445,27 @@ int main() {
 					}
 					X[i][0][0][0][0][0] = X[0][0][0][0][0][0] + DIST[i][0][0][0][0][0] * cos(ROT[i][0][0][0][0][0]);
 					Y[i][0][0][0][0][0] = Y[0][0][0][0][0][0] + DIST[i][0][0][0][0][0] * sin(ROT[i][0][0][0][0][0]);
+					if (X[i][0][0][0][0][0] > AREA_X) {
+						X[i][0][0][0][0][0] = AREA_X;
+					}
+					else if (X[i][0][0][0][0][0] < 0) {
+						X[i][0][0][0][0][0] = 0;
+					}
+					if (Y[i][0][0][0][0][0] > AREA_Y) {
+						Y[i][0][0][0][0][0] = AREA_Y;
+					}
+					else if (Y[i][0][0][0][0][0] < 0) {
+						Y[i][0][0][0][0][0] = 0;
+					}
 
-					GD[i][0][0][0][0][0] = sqrt(pow(GOAL_X - X[i][0][0][0][0][0], 2) + pow(GOAL_Y  - Y[i][0][0][0][0][0], 2));
+
+					GD[i][0][0][0][0][0] = sqrt(pow(GOAL_X - X[i][0][0][0][0][0], 2) + pow(GOAL_Y - Y[i][0][0][0][0][0], 2));
 
 					xP = X[i][0][0][0][0][0];
 					yP = Y[i][0][0][0][0][0];
 					xV = V[i][0][0][0][0][0];
-					humanXP = humanX + humanV * TIMESTEP * cos(humanTheta);
-					humanYP = humanY + humanV * TIMESTEP * sin(humanTheta);
+					humanXP = humanX + humanV * 1 * TIMESTEP * cos(humanTheta);
+					humanYP = humanY + humanV * 1 * TIMESTEP * sin(humanTheta);
 					q[i][0][0][0][0][0] = safety();
 
 					PP[i][0][0][0][0][0] = P;
@@ -387,12 +485,30 @@ int main() {
 							//最大角速度を超過した場合，最大角速度に丸める
 							if (ROTV[i][ii][0][0][0][0] > ROBOT_MAX_RAD) {
 								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
+								if (ROT[i][ii][0][0][0][0] > PI) {
+									ROT[i][ii][0][0][0][0] = ROT[i][ii][0][0][0][0] - 2 * PI;
+								}
+								else if (ROT[i][ii][0][0][0][0] < -1 * PI) {
+									ROT[i][ii][0][0][0][0] = ROT[i][ii][0][0][0][0] + 2 * PI;
+								}
 							}
 							else if (ROTV[i][ii][0][0][0][0] < -1 * ROBOT_MAX_RAD) {
 								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
+								if (ROT[i][ii][0][0][0][0] > PI) {
+									ROT[i][ii][0][0][0][0] = ROT[i][ii][0][0][0][0] - 2 * PI;
+								}
+								else if (ROT[i][ii][0][0][0][0] < -1 * PI) {
+									ROT[i][ii][0][0][0][0] = ROT[i][ii][0][0][0][0] + 2 * PI;
+								}
 							}
 							else {
 								ROT[i][ii][0][0][0][0] = ROT[i][0][0][0][0][0] + ROTV[i][0][0][0][0][0] * TIMESTEP + ROTA[i][ii][0][0][0][0] * TIMESTEP * TIMESTEP / 2;
+								if (ROT[i][ii][0][0][0][0] > PI) {
+									ROT[i][ii][0][0][0][0] = ROT[i][ii][0][0][0][0] - 2 * PI;
+								}
+								else if (ROT[i][ii][0][0][0][0] < -1 * PI) {
+									ROT[i][ii][0][0][0][0] = ROT[i][ii][0][0][0][0] + 2 * PI;
+								}
 							}
 							A[i][ii][0][0][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
 							V[i][ii][0][0][0][0] = V[i][0][0][0][0][0] + A[i][ii][0][0][0][0] * TIMESTEP;
@@ -408,8 +524,20 @@ int main() {
 							}
 							X[i][ii][0][0][0][0] = X[i][0][0][0][0][0] + DIST[i][ii][0][0][0][0] * cos(ROT[i][ii][0][0][0][0]);
 							Y[i][ii][0][0][0][0] = Y[i][0][0][0][0][0] + DIST[i][ii][0][0][0][0] * sin(ROT[i][ii][0][0][0][0]);
+							if (X[i][ii][0][0][0][0] > AREA_X) {
+								X[i][ii][0][0][0][0] = AREA_X;
+							}
+							else if (X[i][ii][0][0][0][0] < 0) {
+								X[i][ii][0][0][0][0] = 0;
+							}
+							if (Y[i][ii][0][0][0][0] > AREA_Y) {
+								Y[i][ii][0][0][0][0] = AREA_Y;
+							}
+							else if (Y[i][ii][0][0][0][0] < 0) {
+								Y[i][ii][0][0][0][0] = 0;
+							}
 
-							GD[i][ii][0][0][0][0] = sqrt(pow(GOAL_X - X[i][ii][0][0][0][0], 2) + pow(GOAL_Y  - Y[i][ii][0][0][0][0], 2));
+							GD[i][ii][0][0][0][0] = sqrt(pow(GOAL_X - X[i][ii][0][0][0][0], 2) + pow(GOAL_Y - Y[i][ii][0][0][0][0], 2));
 
 							xP = X[i][ii][0][0][0][0];
 							yP = Y[i][ii][0][0][0][0];
@@ -435,12 +563,30 @@ int main() {
 									//最大角速度を超過した場合，最大角速度に丸める
 									if (ROTV[i][ii][iii][0][0][0] > ROBOT_MAX_RAD) {
 										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
+										if (ROT[i][ii][iii][0][0][0] > PI) {
+											ROT[i][ii][iii][0][0][0] = ROT[i][ii][iii][0][0][0] - 2 * PI;
+										}
+										else if (ROT[i][ii][iii][0][0][0] < -1 * PI) {
+											ROT[i][ii][iii][0][0][0] = ROT[i][ii][iii][0][0][0] + 2 * PI;
+										}
 									}
 									else if (ROTV[i][ii][iii][0][0][0] < -1 * ROBOT_MAX_RAD) {
 										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
+										if (ROT[i][ii][iii][0][0][0] > PI) {
+											ROT[i][ii][iii][0][0][0] = ROT[i][ii][iii][0][0][0] - 2 * PI;
+										}
+										else if (ROT[i][ii][iii][0][0][0] < -1 * PI) {
+											ROT[i][ii][iii][0][0][0] = ROT[i][ii][iii][0][0][0] + 2 * PI;
+										}
 									}
 									else {
 										ROT[i][ii][iii][0][0][0] = ROT[i][ii][0][0][0][0] + ROTV[i][ii][0][0][0][0] * TIMESTEP + ROTA[i][ii][iii][0][0][0] * TIMESTEP * TIMESTEP / 2;
+										if (ROT[i][ii][iii][0][0][0] > PI) {
+											ROT[i][ii][iii][0][0][0] = ROT[i][ii][iii][0][0][0] - 2 * PI;
+										}
+										else if (ROT[i][ii][iii][0][0][0] < -1 * PI) {
+											ROT[i][ii][iii][0][0][0] = ROT[i][ii][iii][0][0][0] + 2 * PI;
+										}
 									}
 									A[i][ii][iii][0][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
 									V[i][ii][iii][0][0][0] = V[i][ii][0][0][0][0] + A[i][ii][iii][0][0][0] * TIMESTEP;
@@ -456,8 +602,20 @@ int main() {
 									}
 									X[i][ii][iii][0][0][0] = X[i][ii][0][0][0][0] + DIST[i][ii][iii][0][0][0] * cos(ROT[i][ii][iii][0][0][0]);
 									Y[i][ii][iii][0][0][0] = Y[i][ii][0][0][0][0] + DIST[i][ii][iii][0][0][0] * sin(ROT[i][ii][iii][0][0][0]);
+									if (X[i][ii][iii][0][0][0] > AREA_X) {
+										X[i][ii][iii][0][0][0] = AREA_X;
+									}
+									else if (X[i][ii][iii][0][0][0] < 0) {
+										X[i][ii][iii][0][0][0] = 0;
+									}
+									if (Y[i][ii][iii][0][0][0] > AREA_Y) {
+										Y[i][ii][iii][0][0][0] = AREA_Y;
+									}
+									else if (Y[i][ii][iii][0][0][0] < 0) {
+										Y[i][ii][iii][0][0][0] = 0;
+									}
 
-									GD[i][ii][iii][0][0][0] = sqrt(pow(GOAL_X - X[i][ii][iii][0][0][0], 2) + pow(GOAL_Y  - Y[i][ii][iii][0][0][0], 2));
+									GD[i][ii][iii][0][0][0] = sqrt(pow(GOAL_X - X[i][ii][iii][0][0][0], 2) + pow(GOAL_Y - Y[i][ii][iii][0][0][0], 2));
 
 									xP = X[i][ii][iii][0][0][0];
 									yP = Y[i][ii][iii][0][0][0];
@@ -483,12 +641,30 @@ int main() {
 											//最大角速度を超過した場合，最大角速度に丸める
 											if (ROTV[i][ii][iii][iv][0][0] > ROBOT_MAX_RAD) {
 												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] + ROBOT_MAX_RAD * TIMESTEP;
+												if (ROT[i][ii][iii][iv][0][0] > PI) {
+													ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][iv][0][0] - 2 * PI;
+												}
+												else if (ROT[i][ii][iii][iv][0][0] < -1 * PI) {
+													ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][iv][0][0] + 2 * PI;
+												}
 											}
 											else if (ROTV[i][ii][iii][iv][0][0] < -1 * ROBOT_MAX_RAD) {
 												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] - ROBOT_MAX_RAD * TIMESTEP;
+												if (ROT[i][ii][iii][iv][0][0] > PI) {
+													ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][iv][0][0] - 2 * PI;
+												}
+												else if (ROT[i][ii][iii][iv][0][0] < -1 * PI) {
+													ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][iv][0][0] + 2 * PI;
+												}
 											}
 											else {
 												ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][0][0][0] + ROTV[i][ii][iii][0][0][0] * TIMESTEP + ROTA[i][ii][iii][iv][0][0] * TIMESTEP * TIMESTEP / 2;
+												if (ROT[i][ii][iii][iv][0][0] > PI) {
+													ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][iv][0][0] - 2 * PI;
+												}
+												else if (ROT[i][ii][iii][iv][0][0] < -1 * PI) {
+													ROT[i][ii][iii][iv][0][0] = ROT[i][ii][iii][iv][0][0] + 2 * PI;
+												}
 											}
 											A[i][ii][iii][iv][0][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
 											V[i][ii][iii][iv][0][0] = V[i][ii][iii][0][0][0] + A[i][ii][iii][iv][0][0] * TIMESTEP;
@@ -504,8 +680,20 @@ int main() {
 											}
 											X[i][ii][iii][iv][0][0] = X[i][ii][iii][0][0][0] + DIST[i][ii][iii][iv][0][0] * cos(ROT[i][ii][iii][iv][0][0]);
 											Y[i][ii][iii][iv][0][0] = Y[i][ii][iii][0][0][0] + DIST[i][ii][iii][iv][0][0] * sin(ROT[i][ii][iii][iv][0][0]);
+											if (X[i][ii][iii][iv][0][0] > AREA_X) {
+												X[i][ii][iii][iv][0][0] = AREA_X;
+											}
+											else if (X[i][ii][iii][iv][0][0] < 0) {
+												X[i][ii][iii][iv][0][0] = 0;
+											}
+											if (Y[i][ii][iii][iv][0][0] > AREA_Y) {
+												Y[i][ii][iii][iv][0][0] = AREA_Y;
+											}
+											else if (Y[i][ii][iii][iv][0][0] < 0) {
+												Y[i][ii][iii][iv][0][0] = 0;
+											}
 
-											GD[i][ii][iii][iv][0][0] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][0][0], 2) + pow(GOAL_Y  - Y[i][ii][iii][iv][0][0], 2));
+											GD[i][ii][iii][iv][0][0] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][0][0], 2) + pow(GOAL_Y - Y[i][ii][iii][iv][0][0], 2));
 
 											xP = X[i][ii][iii][iv][0][0];
 											yP = Y[i][ii][iii][iv][0][0];
@@ -531,12 +719,30 @@ int main() {
 													//最大角速度を超過した場合，最大角速度に丸める
 													if (ROTV[i][ii][iii][iv][v][0] > ROBOT_MAX_RAD) {
 														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] + ROBOT_MAX_RAD * TIMESTEP;
+														if (ROT[i][ii][iii][iv][v][0] > PI) {
+															ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][v][0] - 2 * PI;
+														}
+														else if (ROT[i][ii][iii][iv][v][0] < -1 * PI) {
+															ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][v][0] + 2 * PI;
+														}
 													}
 													else if (ROTV[i][ii][iii][iv][v][0] < -1 * ROBOT_MAX_RAD) {
 														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] - ROBOT_MAX_RAD * TIMESTEP;
+														if (ROT[i][ii][iii][iv][v][0] > PI) {
+															ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][v][0] - 2 * PI;
+														}
+														else if (ROT[i][ii][iii][iv][v][0] < -1 * PI) {
+															ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][v][0] + 2 * PI;
+														}
 													}
 													else {
 														ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][0][0] + ROTV[i][ii][iii][iv][0][0] * TIMESTEP + ROTA[i][ii][iii][iv][v][0] * TIMESTEP * TIMESTEP / 2;
+														if (ROT[i][ii][iii][iv][v][0] > PI) {
+															ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][v][0] - 2 * PI;
+														}
+														else if (ROT[i][ii][iii][iv][v][0] < -1 * PI) {
+															ROT[i][ii][iii][iv][v][0] = ROT[i][ii][iii][iv][v][0] + 2 * PI;
+														}
 													}
 													A[i][ii][iii][iv][v][0] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
 													V[i][ii][iii][iv][v][0] = V[i][ii][iii][iv][0][0] + A[i][ii][iii][iv][v][0] * TIMESTEP;
@@ -552,8 +758,20 @@ int main() {
 													}
 													X[i][ii][iii][iv][v][0] = X[i][ii][iii][iv][0][0] + DIST[i][ii][iii][iv][v][0] * cos(ROT[i][ii][iii][iv][v][0]);
 													Y[i][ii][iii][iv][v][0] = Y[i][ii][iii][iv][0][0] + DIST[i][ii][iii][iv][v][0] * sin(ROT[i][ii][iii][iv][v][0]);
+													if (X[i][ii][iii][iv][v][0] > AREA_X) {
+														X[i][ii][iii][iv][v][0] = AREA_X;
+													}
+													else if (X[i][ii][iii][iv][v][0] < 0) {
+														X[i][ii][iii][iv][v][0] = 0;
+													}
+													if (Y[i][ii][iii][iv][v][0] > AREA_Y) {
+														Y[i][ii][iii][iv][v][0] = AREA_Y;
+													}
+													else if (Y[i][ii][iii][iv][v][0] < 0) {
+														Y[i][ii][iii][iv][v][0] = 0;
+													}
 
-													GD[i][ii][iii][iv][v][0] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][v][0], 2) + pow(GOAL_Y  - Y[i][ii][iii][iv][v][0], 2));
+													GD[i][ii][iii][iv][v][0] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][v][0], 2) + pow(GOAL_Y - Y[i][ii][iii][iv][v][0], 2));
 
 													xP = X[i][ii][iii][iv][v][0];
 													yP = Y[i][ii][iii][iv][v][0];
@@ -579,12 +797,30 @@ int main() {
 															//最大角速度を超過した場合，最大角速度に丸める
 															if (ROTV[i][ii][iii][iv][v][vi] > ROBOT_MAX_RAD) {
 																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] + ROBOT_MAX_RAD * TIMESTEP;
+																if (ROT[i][ii][iii][iv][v][vi] > PI) {
+																	ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][vi] - 2 * PI;
+																}
+																else if (ROT[i][ii][iii][iv][v][vi] < -1 * PI) {
+																	ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][vi] + 2 * PI;
+																}
 															}
 															else if (ROTV[i][ii][iii][iv][v][vi] < -1 * ROBOT_MAX_RAD) {
 																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] - ROBOT_MAX_RAD * TIMESTEP;
+																if (ROT[i][ii][iii][iv][v][vi] > PI) {
+																	ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][vi] - 2 * PI;
+																}
+																else if (ROT[i][ii][iii][iv][v][vi] < -1 * PI) {
+																	ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][vi] + 2 * PI;
+																}
 															}
 															else {
 																ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][0] + ROTV[i][ii][iii][iv][v][0] * TIMESTEP + ROTA[i][ii][iii][iv][v][vi] * TIMESTEP * TIMESTEP / 2;
+																if (ROT[i][ii][iii][iv][v][vi] > PI) {
+																	ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][vi] - 2 * PI;
+																}
+																else if (ROT[i][ii][iii][iv][v][vi] < -1 * PI) {
+																	ROT[i][ii][iii][iv][v][vi] = ROT[i][ii][iii][iv][v][vi] + 2 * PI;
+																}
 															}
 															A[i][ii][iii][iv][v][vi] = (double)rand() / 32767.0 * 3 / 2 * robPAcc - 1 / 2 * robPAcc;
 															V[i][ii][iii][iv][v][vi] = V[i][ii][iii][iv][v][0] + A[i][ii][iii][iv][v][vi] * TIMESTEP;
@@ -600,8 +836,20 @@ int main() {
 															}
 															X[i][ii][iii][iv][v][vi] = X[i][ii][iii][iv][v][0] + DIST[i][ii][iii][iv][v][vi] * cos(ROT[i][ii][iii][iv][v][vi]);
 															Y[i][ii][iii][iv][v][vi] = Y[i][ii][iii][iv][v][0] + DIST[i][ii][iii][iv][v][vi] * sin(ROT[i][ii][iii][iv][v][vi]);
+															if (X[i][ii][iii][iv][v][vi] > AREA_X) {
+																X[i][ii][iii][iv][v][vi] = AREA_X;
+															}
+															else if (X[i][ii][iii][iv][v][vi] < 0) {
+																X[i][ii][iii][iv][v][vi] = 0;
+															}
+															if (Y[i][ii][iii][iv][v][vi] > AREA_Y) {
+																Y[i][ii][iii][iv][v][vi] = AREA_Y;
+															}
+															else if (Y[i][ii][iii][iv][v][vi] < 0) {
+																Y[i][ii][iii][iv][v][vi] = 0;
+															}
 
-															GD[i][ii][iii][iv][v][vi] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][v][vi], 2) + pow(GOAL_Y  - Y[i][ii][iii][iv][v][vi], 2));
+															GD[i][ii][iii][iv][v][vi] = sqrt(pow(GOAL_X - X[i][ii][iii][iv][v][vi], 2) + pow(GOAL_Y - Y[i][ii][iii][iv][v][vi], 2));
 
 															xP = X[i][ii][iii][iv][v][vi];
 															yP = Y[i][ii][iii][iv][v][vi];
@@ -688,11 +936,11 @@ int main() {
 														minGD = GD[t1][t2][t3][t4][t5][t6];
 														G = t1;
 														nowR = RISKP[t1][0][0][0][0][0];
-														//P = PP[t1][0][0][0][0][0];
+														P = PP[t1][0][0][0][0][0];
 													}
 												}
 											}
-											
+
 										}
 									}
 								}
@@ -732,7 +980,7 @@ int main() {
 					robRot = ROT[p][0][0][0][0][0];
 					robV = V[p][0][0][0][0][0];
 					robRotV = ROTV[p][0][0][0][0][0];
-					gD = sqrt(pow(GOAL_X - robX, 2) + pow(GOAL_Y  - robY, 2));
+					gD = sqrt(pow(GOAL_X - robX, 2) + pow(GOAL_Y - robY, 2));
 					printf("robot pos=(%0.10lf,%0.10lf)\n", robX, robY);
 
 					xP = robX;
@@ -741,22 +989,24 @@ int main() {
 					humanXP = humanX;
 					humanYP = humanY;
 
-					safety();
+					//safety();
 
 					humanMoving();
 
-					safety();
+					//safety();
 
 					w = robX;
 					x = robY;
 					y = humanX;
 					z = humanY;
 					objDist = sqrt(pow(humanX - robX, 2) + pow(humanY - robY, 2));
-					nowR = R;
+					//nowR = R;
 					//string p2string(std::to_string(P));
 
 					//fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%s,%0.10lf\n", w, x, y, z, objDist, nowR, p2string.c_str(), S);
 					fprintf(fp, "%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%0.10lf,%d\n", w, x, y, z, objDist, nowR, P, S, st);
+
+
 
 					if (gD < GOAL_DISTANCE) {
 						break;
@@ -840,6 +1090,12 @@ int safety() {
 	}
 	else {
 		humanThetaP = atan2(yP - humanYP, xP - humanXP) - humanTheta;
+		if (humanThetaP > PI) {
+			humanThetaP = humanThetaP - 2 * PI;
+		}
+		else if (humanThetaP < -1 * PI) {
+			humanThetaP = humanThetaP + 2 * PI;
+		}
 		//printf("humanThetaP=%0.10lf\n", humanThetaP);
 
 		robThetaP = atan2(humanYP - yP, humanXP - xP);
@@ -891,7 +1147,7 @@ int safety() {
 	//printf("risk num=%0.10lf\n", R);
 
 	//安全性の判定
-	if (R > 0.00000011 * TIMESTEP_NUM) {
+	if (R > 0.00000011 / TIMESTEP_NUM) {
 		return 1;
 	}
 	else {
@@ -918,10 +1174,16 @@ int routing() {
 
 	if (humanVP > HUMAN_MAX_VELOCITY) {
 		P = 0;						//人間が移動できる速度を超えているので人間の存在確率は0
-		//printf("P=%0.10lf\n", P);
+									//printf("P=%0.10lf\n", P);
 	}
 	else {
 		humanThetaP = atan2(yP - humanYP, xP - humanXP) - humanTheta;
+		if (humanThetaP > PI) {
+			humanThetaP = humanThetaP - 2 * PI;
+		}
+		else if (humanThetaP < -1 * PI) {
+			humanThetaP = humanThetaP + 2 * PI;
+		}
 		//printf("humanThetaP=%0.10lf\n", humanThetaP);
 
 		robThetaP = atan2(humanYP - yP, humanXP - xP);
@@ -976,8 +1238,14 @@ int humanMoving() {
 	//humanY = humanY + humanV * TIMESTEP * sin((double)rand() / 32767.0 * PI / 16 - PI / 32 + humanTheta);
 	//humanX = humanX - humanV * TIMESTEP;
 	//humanY = humanY - humanV * TIMESTEP;
+
+	//humanGD = sqrt(pow(humanX - HUMAN_GOAL_X, 2) + pow(humanY - HUMAN_GOAL_Y, 2));
+	//if (humanGD > HUMAN_GOAL_DISTANCE) {
 	humanX = humanX + humanV * TIMESTEP * cos(humanTheta);
 	humanY = humanY + humanV * TIMESTEP * sin(humanTheta);
+	//}
+
+
 
 	/*//方向転換45°
 	if (humanX > 2.5) {
