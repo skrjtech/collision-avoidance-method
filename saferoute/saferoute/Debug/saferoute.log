@@ -1,4 +1,4 @@
 ﻿cl : コマンド ライン warning D9025: '/Od' より '/O2' が優先されます。
   main.cpp
-c:\users\佐々木虎之介\documents\collision-avoidance-method\saferoute\saferoute\main.cpp(99): warning C4244: '引数': 'time_t' から 'unsigned int' への変換です。データが失われる可能性があります。
+c:\users\佐々木虎之介\documents\collision-avoidance-method\saferoute\saferoute\main.cpp(122): warning C4244: '引数': 'time_t' から 'unsigned int' への変換です。データが失われる可能性があります。
   saferoute.vcxproj -> C:\Users\佐々木虎之介\Documents\collision-avoidance-method\saferoute\Debug\saferoute.exe

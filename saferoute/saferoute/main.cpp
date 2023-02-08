@@ -13,51 +13,55 @@ FILE* fp; //FILEポインタの宣言
 
 using std::string;
 
-
+//人間に関する変数
 double humanX = 0.0, humanY = 0.0;	        //人間の現在位置[m]
 double humanTheta = 0.0;		        //人間の現在の方向[°]
-double humanXP, humanYP;				//想定される人間の位置[m]
-double xP = 0.0, yP = 0.0;			        //人間の移動予測点[ml
-double xV = 0.0;					//ロボットの予測速度[m/s]
-double colliC = 0;				//人間とロボットの接触距離[m]
+double humanV = 1.4 / 2;	        //人間の移動速度[m/s]
+double humanGD = 0.0;				//現在の人間と人間の目的位置の距離[m]
 
-								//double humanV = 1.4 / 2;	        //人間の移動速度[m/s]
-double humanV = 0.7;								//double humanV = 1.4;
+double humanX_now, humanY_now;		//現在の人間の位置[m]
+double humanX_past, humanY_past;	//過去の人間の位置[m]
 
-double humanVP = 0.0;			        //人間の移動ノルム
-
-double humanThetaP = 0.0;		        //人間の現在位置からみたある点の方向[°]
-double robThetaP = 0.0;					//ロボットのある位置から見た現在の人間の方向[°]
-
-
-double miuV = 0.0;			        //人間の移動速度の期待値[m/s]
-
-double SIGMA_THETA = 0.0; //人間の進行方向の標準偏差
-
-double tp = 0.0;                      //人間の移動予測の時間[s]
-
-
-double VV = 0.0;				        //変数１
-double VO = 0.0;				        //変数２
-
-
-double P = 0.0;				        //ある点の確率密度
-double S = 0.0;				        //ある点の危害の酷さ
-double R = 0.0;				        //衝突リスク値
-
+//ロボットに関する変数
 double robX = 0.0, robY = 0.0;		        //ロボットの位置[m]
 double robRot = 0.0;			        //ロボットの現在方向[rad]
 double robV = 0.0;			//ロボットの現在速度[m/s]
 double robRotV = 0.0;			//ロボットの現在角速度[rad/s]
-
-								//double ROBOT_MAX_RAD = 1.57;
-double robDist = 0.0;			//ロボットが進む距離[m]
-int pN;					        //一つのパーティクルから伸びる枝の数
-
-double humanGD = 0.0;				//現在の人間と人間の目的位置の距離[m]
 double gD = 0.0;				        //現在のロボットと目標位置の距離[m]
-double objDist = 0.0;			        //人間とロボットの距離[m]
-double nowR = 0.0;						//現在の衝突リスク値
+double robXP = 0.0, robYP = 0.0;	//最短移動する際の次のロボットの予測位置[m/s]
+double robRotP = 0.0;				//最短移動する際の次のロボットの予測角度[rad]
+double robRotMax = 0.0;				//単位タイムステップにおけるロボットの最大旋回角度[rad]
+double robRotC = 0.0;				//単位タイムステップにおける最短移動の際のロボットの旋回角度[rad]
+
+//人間の座標変換に関する変数
+double humanDirect;		//ロボットから見た人間の方向[rad]
+double humanDist;		//ロボットから見た人間との距離[m]
+
+double rotRtoD;			//グローバル座標系におけるロボットから見た人間の方向[rad]
+
+
+//人間の移動予測に関する変数
+double humanXP, humanYP;				//想定される人間の位置[m]
+double humanVP = 0.0;			        //人間の移動ノルム（人間がある位置に到達する為に必要な速度）[m/s]
+double humanThetaP = 0.0;		        //人間の現在位置からみたある点の方向[°]
+double miuV = 0.0;						//人間の移動速度の期待値[m/s]
+double SIGMA_THETA = 0.0;				//人間の進行方向の標準偏差
+
+double xP = 0.0, yP = 0.0;			        //人間の移動予測点[m]
+double xV = 0.0;						//ロボットの予測速度[m/s]
+double robThetaP = 0.0;					//ロボットのある位置から見た現在の人間の方向[°]
+
+double colliC = 0;				//人間とロボットの接触距離[m]
+
+double tp = 0.0;                      //人間の移動予測の時間[s]
+double VV = 0.0;				        //変数１
+double VO = 0.0;				        //変数２
+double P = 0.0;				        //ある点の確率密度
+double S = 0.0;				        //ある点の危害の酷さ
+double R = 0.0;				        //衝突リスク値
+
+//軌道計画に関する変数
+double robDist = 0.0;			//ロボットが進む距離[m]
 double X[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM], Y[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];		        //N番目のパーティクルの座標[m]
 double V[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                    //N番目のパーティクル座標におけるロボットの速度[m/s]
 double A[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];                    //N番目のパーティクル座標におけるロボットの加速度[m/s^2]
@@ -69,28 +73,47 @@ double GD[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIME
 double RISKP[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				//各回避軌道経由点候補の衝突リスク値
 double RISKT[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				//各回避軌道候補の積分リスク値
 double PP[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];					//各回避軌道経由点候補における人間の存在確率
+
+double objDist = 0.0;			        //人間とロボットの距離[m]
+
+double nowR = 0.0;						//現在の衝突リスク値
+
+//環境に関する変数
+double span;							//センサの測定間隔[s]
+
+
+//評価に関する変数
+int frag = 0;
+int q[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				        //安全性評価yes/no=0/1
+int r;								//回避軌道生成判定no/yes=0/1
+int s;								//評価値出力用
+int safe = 0;						//安全評価yes/no=0/1
+int st = 1;							//停止評価yes/no=0/1
+
+
+
+
+						
+
+
+
+
+
+
+
+
 																																					//int prev_p[EVERY_TIMESTEP_NUM];			        //N番目のパーティクルと接続する前のパーティクル番号
 
-double robXP = 0.0, robYP = 0.0;	//最短移動する際の次のロボットの予測位置[m/s]
-double robRotP = 0.0;				//最短移動する際の次のロボットの予測角度[rad]
-double robRotMax = 0.0;				//単位タイムステップにおけるロボットの最大旋回角度[rad]
-double robRotC = 0.0;				//単位タイムステップにおける最短移動の際のロボットの旋回角度[rad]
 
 
-int frag = 0;
 
-int q[EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM][EVERY_TIMESTEP_NUM];				        //安全性評価yes/no=0/1
-int r;							//回避軌道生成判定no/yes=0/1
-int s;                          //評価値出力用
-int safe = 0;						//安全評価yes/no=0/1
 
-int st = 1;						//停止評価yes/no=0/1
 
-								//int SELECT[6];					//選択されたルート番号
 
 int routing();
 int safety();
 int humanMoving();
+int conversion();
 
 int main() {
 	printf("main start\n");
@@ -150,6 +173,23 @@ int main() {
 	//ロボットが目的位置に到達していない場合，移動を継続する
 	while (robX != GOAL_X || robY != GOAL_Y)
 	{
+		//過去の人間の位置を保存
+		humanX_past = humanX;
+		humanY_past = humanY;
+
+		//現在の人間の位置を取得
+		int conversion();
+
+		humanX_now = humanX;
+		humanY_now = humanY;
+
+		//ロボットの現在速度の算出
+		humanV = sqrt(pow(humanX_now - humanX_past, 2) + pow(humanY_now - humanY_past, 2)) / span;
+
+		//ロボットの現在方向の算出
+		humanTheta = atan2(humanY_now - humanY_past, humanX_now - humanX_past);
+
+
 		//printf("robot start moving\n");
 
 		//ロボットが危険回避のための停止動作を行っているか
@@ -234,7 +274,7 @@ int main() {
 			humanYP = humanY + humanV * 1 * TIMESTEP * sin(humanTheta);
 			safe = safety();
 
-			humanMoving();
+			//humanMoving();
 
 			//safety();
 
@@ -351,7 +391,7 @@ int main() {
 				humanYP = humanY + humanV * 1 * TIMESTEP * sin(humanTheta);
 				safety();
 
-				humanMoving();
+				//humanMoving();
 
 				//safety();
 
@@ -991,7 +1031,7 @@ int main() {
 
 					//safety();
 
-					humanMoving();
+					//humanMoving();
 
 					//safety();
 
@@ -1270,6 +1310,57 @@ int humanMoving() {
 	frag = 1;
 	humanY = humanY - 0.5;
 	}*/
+
+	return 0;
+}
+
+//人間の座標：ロボット座標→グローバル座標
+int conversion() {
+
+	/*ここでロボットの現在位置を取得*/
+
+
+	//人間の方向が正方向かつロボットの方向より角度が大きい場合
+	if (humanDirect >= 0 && humanDirect >= robRot) {
+		rotRtoD = robRot - humanDirect;
+		if (rotRtoD > PI) {
+			rotRtoD = rotRtoD - 2 * PI;
+		}
+		else if (rotRtoD < -1 * PI) {
+			rotRtoD = rotRtoD + 2 * PI;
+		}
+
+		humanX = robX + humanDist * cos(rotRtoD);
+		humanY = robY + humanDist * sin(rotRtoD);
+	}
+
+	//人間の方向が正方向かつロボットの方向より角度が小さい場合
+	else if (humanDirect >= 0 && humanDirect < robRot) {
+		rotRtoD = humanDirect - robRot;
+		if (rotRtoD > PI) {
+			rotRtoD = rotRtoD - 2 * PI;
+		}
+		else if (rotRtoD < -1 * PI) {
+			rotRtoD = rotRtoD + 2 * PI;
+		}
+
+		humanX = robX + humanDist * cos(rotRtoD);
+		humanY = robY + humanDist * sin(rotRtoD);
+	}
+
+	//それ以外の場合
+	else {
+		rotRtoD = humanDirect + robRot;
+		if (rotRtoD > PI) {
+			rotRtoD = rotRtoD - 2 * PI;
+		}
+		else if (rotRtoD < -1 * PI) {
+			rotRtoD = rotRtoD + 2 * PI;
+		}
+
+		humanX = robX + humanDist * cos(rotRtoD);
+		humanY = robY + humanDist * sin(rotRtoD);
+	}
 
 	return 0;
 }
